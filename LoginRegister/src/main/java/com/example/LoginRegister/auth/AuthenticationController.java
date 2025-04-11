@@ -25,8 +25,6 @@ public class AuthenticationController {
         @RequestBody RegisterRequest request
     ) {
        
-      
-      System.out.println("Received registration request: " + request);
       return ResponseEntity.ok(service.register(request));
     }
     
@@ -34,6 +32,9 @@ public class AuthenticationController {
      public ResponseEntity<AuthenticationResponse> authenticate(
       @RequestBody AuthenticationRequest request
   ) {
+    
     return ResponseEntity.ok(service.authenticate(request));
   }
+
+  
 }

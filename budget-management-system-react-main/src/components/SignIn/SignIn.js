@@ -4,8 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './SignIn.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faLock, faArrowRight, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
-import { faGoogle } from '@fortawesome/free-brands-svg-icons';
-
+import axios from "axios";
 function SignIn() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -42,6 +41,23 @@ function SignIn() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setLoading(true);
+    const formData = {
+      email,
+      password,
+    };
+    console.log('Form data:', formData);
+     const response = await axios.post(
+          "http://localhost:8095/api/v1/auth/authenticate", 
+          formData, 
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            withCredentials: true
+          }
+        );
+        console.log("Response Status:", response.status);  
+      //  console.log(response.data);
     if (validateForm()) {
       console.log('Form is valid');
       // Simulate an API call
@@ -55,10 +71,7 @@ function SignIn() {
     }
   }
 
-  const handleGoogleLogin = () => {
-    console.log('Logging in with Google');
-    navigate('/dashboard');
-  };
+ 
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -70,12 +83,7 @@ function SignIn() {
     <div className="text-center">
         <p>Log in to <span className="bold-text">Bee Finance</span></p>
     </div>
-    <div className="form-group">
-      <button className="btn-fullwidth" onClick={handleGoogleLogin}>
-          <FontAwesomeIcon icon={faGoogle} className="icon" />
-          Login with Google
-        </button>
-    </div>
+    
     <form onSubmit={handleSubmit}>
     <div className="form-group input-icon-container">
       <FontAwesomeIcon icon={faEnvelope} className="input-icon" />

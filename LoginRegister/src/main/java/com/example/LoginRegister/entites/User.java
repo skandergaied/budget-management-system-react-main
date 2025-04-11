@@ -39,6 +39,9 @@ public class User implements UserDetails{
     
     private Role role;
 
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private Collection<Expense> expenses;
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.singletonList(new SimpleGrantedAuthority(role.name()));

@@ -63,7 +63,6 @@ function Sign() {
     setLoading(false);
     return;
   }
-
   try {
     const formData = {
       firstName,
@@ -164,7 +163,9 @@ function Sign() {
       {error.password && <div className="invalid-feedback">{error.password}</div>}
     </div>
 
-    
+    <div className="text-center">
+          <p>Do you have an account? <Link to="/" className="dark-link">Sign In</Link></p>
+          </div>
 
         <div className="form-group">
           <button type="submit" className="btn-login" disabled={loading}>

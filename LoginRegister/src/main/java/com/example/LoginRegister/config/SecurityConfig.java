@@ -27,8 +27,10 @@ import java.util.Arrays;
                         http       
                          .cors(withDefaults())                  
                         .csrf(csrf -> csrf.disable()) 
-                         .authorizeHttpRequests(auth -> auth.requestMatchers("/api/v1/auth/**").permitAll()  
-                          .anyRequest().authenticated()  )        
+                        .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/expense/**").authenticated() 
+                        .anyRequest().authenticated())         
                          .sessionManagement(session -> session  .sessionCreationPolicy(SessionCreationPolicy.STATELESS)  )     
                         .authenticationProvider(authenticationProvider) 
                          .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)  
@@ -57,5 +59,4 @@ import java.util.Arrays;
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
 
-        }
-                         } 
+        }  } 
