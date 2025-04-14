@@ -12,13 +12,15 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "expense")
 public class Expense {
@@ -42,4 +44,15 @@ public class Expense {
     @JoinColumn(name = "user_id", nullable = true)
     private User user;
     
+    @Override
+    public String toString() {
+        return "Expense{" +
+               "id=" + id +
+               ", name='" + name + '\'' +
+               ", description='" + description + '\'' +
+               ", amount=" + amount +
+               ", date=" + date +
+               ", category='" + category + '\'' +
+               '}';
+    }
 }

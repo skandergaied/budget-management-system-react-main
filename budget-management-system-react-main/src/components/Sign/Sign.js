@@ -6,7 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faLock, faArrowRight, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 import axios from "axios";
-
+import Cookies from 'js-cookie';
 function Sign() {
   const navigate = useNavigate();
 
@@ -16,7 +16,6 @@ function Sign() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const [error, setError] = useState({
     email: '',
     firstName: '',
@@ -70,8 +69,15 @@ function Sign() {
       email,
       password,
     };
-
-    console.log("Form Data:", formData); // Debugging: Log the payload
+    const form = {
+      firstName,
+      lastName,
+  
+    };
+    
+    
+    localStorage.setItem('username', JSON.stringify(form));
+    console.log("Form Data:", JSON.stringify(form)); 
     const response = await axios.post(
       "http://localhost:8095/api/v1/auth/register", 
       formData, 
@@ -82,14 +88,14 @@ function Sign() {
         withCredentials: true
       }
     );
-    console.log("Response Status:", response.status);     
-        console.log("Response:", response.data);
+    const token = response.data.access_token;
+    Cookies.set('token', token, { expires: 1 }); 
 
-    setMessage("Registration successful!");
+   
     navigate('/dashboard');
   } catch (error) {
     console.error("Error during registration:", error.response?.data || error.message);
-    setMessage("Registration failed: " + (error.response?.data?.message || error.message));
+
   } finally {
     setLoading(false);
   }

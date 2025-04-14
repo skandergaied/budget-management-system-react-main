@@ -1,5 +1,4 @@
 // Dashboard.js
-import React from 'react';
 import { Container, Row, Col, Button } from 'react-bootstrap';
 import SidebarNav from '../SidebarNav/SidebarNav';
 import BreadcrumbAndProfile from '../BreadcrumbAndProfile/BreadcrumbAndProfile';
@@ -9,15 +8,25 @@ import './Dashboard.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRotateRight } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
 
 function Dashboard({ totalIncomes, totalExpenses }) {
   // Calculate the total financial data
   const total = totalIncomes + totalExpenses;
-
+  const [Username1, setUsername] = useState('');
   // Function to reload the page
   const handleReload = () => {
     window.location.reload();
+    
   };
+
+  useEffect(() => {
+    const storedName = localStorage.getItem('username');
+    if (storedName) {
+      const parsedName = JSON.parse(storedName); 
+      setUsername(parsedName.firstName); 
+    }
+  }, []);
 
   return (
 <Container fluid>
@@ -27,7 +36,7 @@ function Dashboard({ totalIncomes, totalExpenses }) {
     </Col>
     <Col md={10} className="main-content main">
       <BreadcrumbAndProfile 
-        username="Mr. French Pitbull" 
+        username={Username1}
         role="Freelancer React Developer" 
         pageTitle="Dashboard"
         breadcrumbItems={[

@@ -5,6 +5,7 @@ import './SignIn.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faLock, faArrowRight, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import axios from "axios";
+import Cookies from 'js-cookie';
 function SignIn() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -56,11 +57,16 @@ function SignIn() {
             withCredentials: true
           }
         );
-        console.log("Response Status:", response.status);  
-      //  console.log(response.data);
+
+        
+
+        const token = response.data.access_token;
+        Cookies.set('token', token, { expires: 1 }); 
+
+      
     if (validateForm()) {
       console.log('Form is valid');
-      // Simulate an API call
+      
       setTimeout(() => {
         setLoading(false);
         navigate('/dashboard');

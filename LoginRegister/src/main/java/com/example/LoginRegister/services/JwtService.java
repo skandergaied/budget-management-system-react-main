@@ -8,7 +8,6 @@ import java.util.function.Function;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -31,11 +30,18 @@ public class JwtService {
     return generatTokeaString(new HashMap<>(), userDetails);
   }
 
+  public  String extractUserId(String token) {
+    Claims claims = extractAllClaims(token);
+    System.out.println("Claimsggggggggggggggggggggggggggggggggggggggggggggggggggggggggg: "+claims ); 
+    return claims.get("userId", String.class); 
+}
+
   
 
     public String generatTokeaString(Map<String, Object> extractClaims, UserDetails subject) {
+        System.out.println("dhdhdhdhhdhdhdhdhdhdhdhdhd"+subject);
         return Jwts.builder().setClaims(extractClaims).setSubject(subject.getUsername()).setIssuedAt(new Date(System.currentTimeMillis()))
-        .setExpiration(new Date(System.currentTimeMillis()+1000*60*24)).signWith(getSignInkey(),SignatureAlgorithm.HS256).compact()
+        .setExpiration(new Date(System.currentTimeMillis()+10000*60*24)).signWith(getSignInkey(),SignatureAlgorithm.HS256).compact()
         ;
     }
 
@@ -64,7 +70,7 @@ public class JwtService {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
       }
-    private Claims extractAllClaims(String jwt) {
+    private  Claims extractAllClaims(String jwt) {
         return Jwts.parserBuilder().setSigningKey(getSignInkey()).build().parseClaimsJws(jwt).getBody();
         
             }

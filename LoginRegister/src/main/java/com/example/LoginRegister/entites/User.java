@@ -12,7 +12,8 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "app_user")
 public class User implements UserDetails{
@@ -40,7 +41,7 @@ public class User implements UserDetails{
     private Role role;
 
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user",cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Collection<Expense> expenses;
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -70,5 +71,16 @@ public class User implements UserDetails{
     @Override
     public String getUsername() {
       return email;
+    }
+    
+    @Override
+    public String toString() {
+        return "User{" +
+               "id=" + id +
+               ", firstName='" + firstName + '\'' +
+               ", lastName='" + lastName + '\'' +
+               ", email='" + email + '\'' +
+               ", role=" + role +
+               '}';
     }
 }

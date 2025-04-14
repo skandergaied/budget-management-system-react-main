@@ -9,13 +9,16 @@ import 'chartjs-adapter-date-fns';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExcel, faArrowCircleLeft, faArrowCircleRight, faPlusCircle, faPenToSquare, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'framer-motion';
-
+import axios from "axios";
+import Cookies from 'js-cookie';
+import { useNavigate} from 'react-router-dom';
 function Expenses() {
   const [expenses, setExpenses] = useState(() => {
     const savedExpenses = localStorage.getItem('expenses');
     return savedExpenses ? JSON.parse(savedExpenses) : [];
   });
   const [name, setName] = useState('');
+  const [Username1, setUsername] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
   const [description, setDescription] = useState('');
@@ -26,13 +29,22 @@ function Expenses() {
   const [currentPage, setCurrentPage] = useState(1);
   const [expensesPerPage] = useState(5);
   const [searchQuery, setSearchQuery] = useState(''); // State for search query
-
+  const [expensesData, setExpensesData] = useState([]);
+  const navigate = useNavigate();
   const categories = ['Utility', 'Rent', 'Groceries', 'Entertainment', 'Other']; // Example categories for expenses
 
   useEffect(() => {
     localStorage.setItem('expenses', JSON.stringify(expenses));
+    const storedName = localStorage.getItem('username');
+    console.log('Stored name:', storedName);
+    if (storedName) {
+      const parsedName = JSON.parse(storedName); // Parse the stored JSON string
+      setUsername(parsedName.firstName); // Assuming `username` is the first name
+    }
   }, [expenses]);
 
+  
+ 
   // New function to export incomes to Excel
   const exportToExcel = () => {
     const ws = XLSX.utils.json_to_sheet(expenses);
@@ -52,7 +64,7 @@ function Expenses() {
     setCategory(expense.category || ''); // Set category for editing
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name || !amount || !date || !description || !category) {
       alert("All fields are required, including the category.");
@@ -64,14 +76,53 @@ function Expenses() {
     }
 
     const expenseData = {
-      id: editing ? currentExpense.id : Date.now(),
+     // id: editing ? currentExpense.id : Date.now(),
       name,
       amount,
       date,
       description,
-      status: isPaid ? "PAID" : "DUE",
-      category, // Save the selected category
+     // status: isPaid ? "PAID" : "DUE",
+      category, 
     };
+
+    const token = Cookies.get('token');
+ 
+    
+    try {
+      const response = await axios.post(
+        "http://localhost:8095/api/v1/expense/SKander",
+        expenseData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const listtt = await axios.get(
+        "http://localhost:8095/api/v1/expense/"
+       
+      );
+
+
+      
+    
+      console.log("Response Status:", response.status);
+    
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error while sending expense data:', error);
+    }
+
+       
+     
+       setTimeout(() => {
+       // setLoading(false);
+        navigate('/dashboard');
+      }, 2000);
 
     if (editing) {
       setExpenses(expenses.map(expense => expense.id === currentExpense.id ? expenseData : expense));
@@ -112,12 +163,7 @@ function Expenses() {
     : expenses;
 
   // Pagination logic
-  const indexOfLastExpense = currentPage * expensesPerPage;
-  const indexOfFirstExpense = indexOfLastExpense - expensesPerPage;
-  const currentExpenses = filteredExpenses.slice(indexOfFirstExpense, indexOfLastExpense);
 
-  // Change page function
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   // Handle page navigation
   const handlePreviousPage = () => {
@@ -171,7 +217,7 @@ function Expenses() {
         </Col>
         <Col md={10} className="main">
         <BreadcrumbAndProfile 
-          username="Mr. French Pitbull" 
+          username={Username1}
           role="Freelancer React Developer" 
           pageTitle="Expenses"
           breadcrumbItems={[
@@ -267,7 +313,7 @@ function Expenses() {
       <div className="button-group">
         <Button className="edit" size="sm" onClick={() => handleEdit(expense)} style={{ marginRight: '5px' }}>
           <FontAwesomeIcon icon={faPenToSquare} className="icon-left"/>Edit
-        </Button>
+        </Button> 
         <Button variant="danger" size="sm" onClick={() => handleRemove(expense.id)}>
           <FontAwesomeIcon icon={faTrashCan} className="icon-left"/>Remove
         </Button>
