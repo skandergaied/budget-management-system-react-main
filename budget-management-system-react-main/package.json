@@ -31,6 +31,7 @@
     "xlsx": "^0.18.5"
   },
   
+  
   "scripts": {
     "start": "cross-env NODE_OPTIONS=\"--openssl-legacy-provider --max-old-space-size=4096\" react-scripts start",
     "predeploy": "npm run build",

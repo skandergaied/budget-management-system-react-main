@@ -2,10 +2,14 @@ package com.example.LoginRegister.dtos;
 
 import java.time.LocalDate;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 
 @Data
+@NoArgsConstructor            // <-- generates public ExpenseDto() { }
+@AllArgsConstructor           // optional: generates a constructor with all fields
 public class ExpenseDto {
     private Long id;
     private String name;
@@ -13,14 +17,7 @@ public class ExpenseDto {
     private double amount;
     private LocalDate date;
     private String category;
-    private Long userId; // Include user ID if needed
-    public ExpenseDto(Long id, String name, String description, double amount, LocalDate date, String category, Long userId) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.amount = amount;
-        this.date = date;
-        this.category = category;
-        this.userId = userId;
-    }
+    private Long userId;
+    
+
 }

@@ -1,5 +1,6 @@
 package com.example.LoginRegister.services;
 
+
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,32 +9,31 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.LoginRegister.Request.ExpenseRequest;
 import com.example.LoginRegister.dtos.ExpenseDto;
-import com.example.LoginRegister.entites.Expense;
+import com.example.LoginRegister.entites.Incomes;
 import com.example.LoginRegister.entites.User;
-import com.example.LoginRegister.repositories.ExpenseRepository;
+import com.example.LoginRegister.repositories.IncomesRepositry;
 import com.example.LoginRegister.repositories.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+
 @Service
 @RequiredArgsConstructor
 
-public class ExpenseService {
-    
-  private final ExpenseRepository expenseRepository;
- 
-   
-    @Autowired
+public class IncomesService {
+     @Autowired
     private JwtService jwtService;
 
    @Autowired
    private UserRepository userRepository;
-  public Expense save(ExpenseRequest request, String authHeader) {
-    
+    @Autowired
+   private IncomesRepositry incomesRepositry;
+  public Incomes save(ExpenseRequest request, String authHeader) {
+       
        String token = authHeader.substring(7);
         String userEmail = jwtService.extractUsername(token);
-        
+     //   System.out.println("userEmailllllllllllllllllllllllllllllll"+request);
         User user = userRepository.findByEmail(userEmail).orElseThrow(() -> new RuntimeException("User not found"));
-    var expense = Expense.builder()
+    var income = Incomes.builder()
             .name(request.getName())
             .description(request.getDescription())
             .amount(request.getAmount())
@@ -41,13 +41,15 @@ public class ExpenseService {
             .category(request.getCategory())
             .user(user)
             .build();
-    return expenseRepository.save(expense);
+    
+    System.out.println("userEmaillllllllllllllllllllfffffflllllllllll"+income);
+    return incomesRepositry.save(income);
     
 }
      @Transactional
      public List<ExpenseDto> findAll() {
-     System.out.println("findAll method called"+" "+ expenseRepository.findAll());
-     return expenseRepository.findAll().stream()
+     System.out.println("findAll method called"+" "+ incomesRepositry.findAll());
+     return incomesRepositry.findAll().stream()
         .map(expense -> new ExpenseDto(
             expense.getId(),
             expense.getName(),
@@ -63,8 +65,8 @@ public class ExpenseService {
 
      @Transactional
      public List<ExpenseDto> findby(long id) {
-     System.out.println("findAll method called"+" "+ expenseRepository.findByUser_Id(id));
-     return expenseRepository.findByUser_Id(id).stream()
+     System.out.println("findAll method called"+" "+ incomesRepositry.findByUser_Id(id));
+     return incomesRepositry.findByUser_Id(id).stream()
         .map(expense -> new ExpenseDto(
             expense.getId(),
             expense.getName(),
@@ -78,27 +80,21 @@ public class ExpenseService {
      // return expenseRepository.findAll();
      }
 
-
-
+     
     @Transactional
     public void deleteExpense(Long IncomesId) {
-        expenseRepository.deleteById(IncomesId);
+        incomesRepositry.deleteById(IncomesId);
     }
 
     @Transactional
-     public Expense updateExpenses(Long ExpenseId,ExpenseDto request) {
-        Expense expenses = expenseRepository.findById(ExpenseId).orElseThrow();
+     public Incomes updateIncomes(Long IncomeId,ExpenseDto request) {
+        Incomes incomes = incomesRepositry.findById(IncomeId).orElseThrow();
         
-        if (request.getName() != null) expenses.setName(request.getName());
-        if (request.getDescription() != null) expenses.setDescription(request.getDescription());
-        if (request.getAmount() != 0) expenses.setAmount(request.getAmount());
-        if (request.getDate() != null) expenses.setDate(request.getDate());
-        if (request.getCategory() != null) expenses.setCategory(request.getCategory());
-       return expenseRepository.save(expenses);
+        if (request.getName() != null) incomes.setName(request.getName());
+        if (request.getDescription() != null) incomes.setDescription(request.getDescription());
+        if (request.getAmount() != 0) incomes.setAmount(request.getAmount());
+        if (request.getDate() != null) incomes.setDate(request.getDate());
+        if (request.getCategory() != null) incomes.setCategory(request.getCategory());
+       return incomesRepositry.save(incomes);
     }
-
-
-
-
-    
 }

@@ -21,7 +21,7 @@ function SidebarNav() {
        Sign Out
       </Nav.Link>
       <a href="https://github.com/igordinuzzi" className="github-link" target="_blank" rel="noopener noreferrer">
-      <FontAwesomeIcon icon={faGithub} /> made by Igor
+      <FontAwesomeIcon icon={faGithub} /> made by Iskander
     </a>
     </Nav>
   );

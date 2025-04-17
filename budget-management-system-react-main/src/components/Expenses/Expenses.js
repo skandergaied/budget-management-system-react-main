@@ -28,6 +28,7 @@ function Expenses() {
   const [category, setCategory] = useState(''); // State for storing selected category
   const [currentPage, setCurrentPage] = useState(1);
   const [expensesPerPage] = useState(5);
+  
   const [searchQuery, setSearchQuery] = useState(''); // State for search query
   const [expensesData, setExpensesData] = useState([]);
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ function Expenses() {
   useEffect(() => {
     localStorage.setItem('expenses', JSON.stringify(expenses));
     const storedName = localStorage.getItem('username');
-    console.log('Stored name:', storedName);
+    
     if (storedName) {
       const parsedName = JSON.parse(storedName); // Parse the stored JSON string
       setUsername(parsedName.firstName); // Assuming `username` is the first name
@@ -46,7 +47,7 @@ function Expenses() {
   
  
   // New function to export incomes to Excel
-  const exportToExcel = () => {
+    const exportToExcel = () => {
     const ws = XLSX.utils.json_to_sheet(expenses);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Expenses");
@@ -64,8 +65,83 @@ function Expenses() {
     setCategory(expense.category || ''); // Set category for editing
   };
 
+
+  useEffect(() => {
+    const fetchIncomes = async () => {
+      const token = Cookies.get('token'); 
+      if (!token) {
+        console.error("No token found. User is not authenticated.");
+        return;
+      }
+
+      try {
+        const response = await axios.get(
+          "http://localhost:8095/api/v1/expense/Alx",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, 
+            },
+          }
+        );
+        console.log("Fetched incomes:", response.data);
+        setExpensesData(response.data); 
+      } catch (error) {
+        console.error("Error fetching incomes:", error.response?.data || error.message);
+      }
+    };
+    fetchIncomes(); 
+  }, []);
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (editing) {
+          const isConfirmed = window.confirm("Are you sure you want to update this income?");
+          if (!isConfirmed) {
+            return;
+          }
+          const updatedExpense = {
+            id: currentExpense.id,
+            name,
+            amount,
+            date,
+            description,
+            category,
+          };
+          const token = Cookies.get('token');
+          try {
+            const response = await axios.put(
+              `http://localhost:8095/api/v1/expense/update/${currentExpense.id}`,
+              updatedExpense,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+          
+            setExpensesData(expensesData.map(expense =>
+              expense.id === currentExpense.id
+                ? {
+                    ...expense,
+                    name,
+                    amount,
+                    date,
+                    description,
+                    category
+                  }
+                : expense
+            ));
+            
+          } catch (error) {
+            console.error('Error:', error.response ? error.response.data : error.message);
+          }
+          resetForm();
+         // setEditing(false);
+        } 
+
+    else{
     if (!name || !amount || !date || !description || !category) {
       alert("All fields are required, including the category.");
       return;
@@ -86,7 +162,19 @@ function Expenses() {
     };
 
     const token = Cookies.get('token');
- 
+     
+    const listtt = await axios.get(
+      "http://localhost:8095/api/v1/expense/Alx",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+     
+    );
+     console.log("List of expensesfg:", listtt.data);
+    setExpensesData(listtt.data);
+   
     
     try {
       const response = await axios.post(
@@ -98,20 +186,9 @@ function Expenses() {
           },
         }
       );
-
-      const listtt = await axios.get(
-        "http://localhost:8095/api/v1/expense/"
-       
-      );
-
-
+      console.log("Expense added successfully:ddddddddddddddddddddddddddddd", response.data);
+      setExpensesData([...expensesData, response.data]);
       
-    
-      console.log("Response Status:", response.status);
-    
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 2000);
       
     } catch (error) {
       console.error('Error while sending expense data:', error);
@@ -119,10 +196,7 @@ function Expenses() {
 
        
      
-       setTimeout(() => {
-       // setLoading(false);
-        navigate('/dashboard');
-      }, 2000);
+      
 
     if (editing) {
       setExpenses(expenses.map(expense => expense.id === currentExpense.id ? expenseData : expense));
@@ -131,6 +205,7 @@ function Expenses() {
     }
 
     resetForm();
+  }
   };
 
   const resetForm = () => {
@@ -144,13 +219,26 @@ function Expenses() {
     setCategory(''); // Reset category
   };
 
-  const handleRemove = (id) => {
+  const handleRemove = async (id) => {
     const isConfirmed = window.confirm("Are you sure you want to remove this expense?");
+    const token = Cookies.get('token');
+     
+    try {
+      const response = await axios.delete(`http://localhost:8095/api/v1/expense/Deleteexpense/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      });
+      console.log('Success:', response.data);
+    } catch (error) {
+      console.error('Error:', error.response ? error.response.data : error.message);
+    }
+     console.log("marrryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
     if (isConfirmed) {
-      setExpenses(expenses.filter(expense => expense.id !== id));
+      setExpensesData(expensesData.filter(expense => expense.id !== id));
     }
   };
-
+/*
   const totalExpense = expenses.reduce((total, expense) => total + parseFloat(expense.amount), 0);
 
   // Filter expenses based on search query
@@ -169,10 +257,11 @@ function Expenses() {
   const handlePreviousPage = () => {
     setCurrentPage(prev => prev > 1 ? prev - 1 : prev);
   };
+  
 
   const handleNextPage = () => {
     setCurrentPage(prev => prev * expensesPerPage < filteredExpenses.length ? prev + 1 : prev);
-  };
+  };*/
 
   const chartData = {
     labels: expenses.map(expense => new Date(expense.date)), // Make sure dates are converted to Date objects
@@ -243,7 +332,7 @@ function Expenses() {
       <Card.Body>
         <Card.Title>Total Expense</Card.Title>
         <Card.Text>
-          Total: €{totalExpense.toFixed(2)}
+         
         </Card.Text>
       </Card.Body>
     </Card>
@@ -305,18 +394,16 @@ function Expenses() {
 </Form>
 
 <ListGroup className="mt-3">
-  {filteredExpenses.map((expense) => (
-    <ListGroup.Item key={expense.id} className="list-group-item">
+  {expensesData.map((expensesData) => (
+    <ListGroup.Item key={expensesData?.id} className="list-group-item">
       <div className="expense-details">
-        {`${expense.name} - Amount: €${expense.amount} - Date: ${expense.date} - Type: ${expense.description} - Category: ${expense.category || 'Not specified'} - Status: ${expense.status}`}
+        {` ${expensesData.id}-Name:${expensesData?.name} - Amount: €${expensesData?.amount} - Date: ${expensesData?.date} - Type: ${expensesData?.description} - Category: ${expensesData?.category || 'Not specified'} - Status: ${expensesData?.status}`}
       </div>
       <div className="button-group">
-        <Button className="edit" size="sm" onClick={() => handleEdit(expense)} style={{ marginRight: '5px' }}>
-          <FontAwesomeIcon icon={faPenToSquare} className="icon-left"/>Edit
-        </Button> 
-        <Button variant="danger" size="sm" onClick={() => handleRemove(expense.id)}>
-          <FontAwesomeIcon icon={faTrashCan} className="icon-left"/>Remove
-        </Button>
+        <Button className="edit" size="sm" onClick={() => handleEdit(expensesData)} style={{ marginRight: '5px' }}>
+          <FontAwesomeIcon icon={faPenToSquare} className="icon-left"/>Edit </Button> 
+        <Button variant="danger" size="sm" onClick={() => handleRemove(expensesData.id)}>
+          <FontAwesomeIcon icon={faTrashCan} className="icon-left" />Remove  </Button>
       </div>
     </ListGroup.Item>
   ))}
@@ -329,8 +416,8 @@ function Expenses() {
       </Button>
                   {/* Pagination Controls */}
             <div className="d-flex justify-content-between mt-3">
-            <Button onClick={handlePreviousPage} className="page" disabled={currentPage === 1}><FontAwesomeIcon icon={faArrowCircleLeft} /></Button>
-            <Button onClick={handleNextPage} className="page" disabled={currentPage * expensesPerPage >= expenses.length}><FontAwesomeIcon icon={faArrowCircleRight} /></Button>
+            <Button  className="page" disabled={currentPage === 1}><FontAwesomeIcon icon={faArrowCircleLeft} /></Button>
+            <Button  className="page" disabled={currentPage * expensesPerPage >= expenses.length}><FontAwesomeIcon icon={faArrowCircleRight} /></Button>
           </div>
 
 

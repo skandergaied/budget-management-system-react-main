@@ -29,43 +29,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
     @Override
     protected void doFilterInternal(
-        @SuppressWarnings("null") @NonNull HttpServletRequest request,
-        @SuppressWarnings("null") @NonNull HttpServletResponse response, 
-        @SuppressWarnings("null") @NonNull FilterChain filterChain
-        )
-        throws ServletException, IOException {
+        @NonNull HttpServletRequest request,
+        @NonNull HttpServletResponse response, 
+        @NonNull FilterChain filterChain
+    ) throws ServletException, IOException {
+    
         final String authorizationHeader = request.getHeader("Authorization");
-        final String tokenPrefix = "Bearer";
+        final String tokenPrefix = "Bearer ";
         final String jwt;
         final String userEmail;
-
+    
         if (authorizationHeader == null || !authorizationHeader.startsWith(tokenPrefix)) {
             filterChain.doFilter(request, response);
             return;
-            }
-        
-            jwt = authorizationHeader.substring(7); 
-       
-        userEmail = Jwtservice.extractUsername(jwt);
-
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-         
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-          
-
-            if (Jwtservice.validateToken(jwt, userDetails)) {
-               UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-               authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-               SecurityContextHolder.getContext().setAuthentication(authToken);
-               System.out.println("Authentication set in SecurityContextHolder"); 
-            }
-            filterChain.doFilter(request, response);
-            
-            return;
         }
-
-
     
+        jwt = authorizationHeader.substring(7);
+        userEmail = Jwtservice.extractUsername(jwt);
+    
+        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+            
+            if (Jwtservice.validateToken(jwt, userDetails)) {
+                UsernamePasswordAuthenticationToken authToken = 
+                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+                System.out.println("✅ Authentication set in SecurityContextHolder for: " + userEmail);
+            }
+        }
+    
+        
+        filterChain.doFilter(request, response);
     }
+    
 }
 

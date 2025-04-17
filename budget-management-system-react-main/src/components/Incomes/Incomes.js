@@ -3,18 +3,16 @@ import { Button, Form, ListGroup, Container, Row, Col, Card, InputGroup, FormCon
 import SidebarNav from '../SidebarNav/SidebarNav';
 import BreadcrumbAndProfile from '../BreadcrumbAndProfile/BreadcrumbAndProfile';
 import * as XLSX from 'xlsx';
-import { Line } from 'react-chartjs-2';
+
 import 'chartjs-adapter-date-fns';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileExcel, faArrowCircleLeft, faArrowCircleRight, faPlusCircle, faPenToSquare, faTrashCan } from '@fortawesome/free-solid-svg-icons';
+import { faFileExcel, faArrowCircleLeft, faPlusCircle, faPenToSquare, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'framer-motion';
-
-
+import Cookies from 'js-cookie';
+import axios from "axios";
+import { useNavigate} from 'react-router-dom';
 function Incomes() {
-  const [incomes, setIncomes] = useState(() => {
-    const savedIncomes = localStorage.getItem('incomes');
-    return savedIncomes ? JSON.parse(savedIncomes) : [];
-  });
+  const [Username1, setUsername] = useState('');
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
@@ -26,33 +24,93 @@ function Incomes() {
   const [incomesPerPage] = useState(5);
   const [category, setCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-
+  const navigate = useNavigate();
+  const [incomesData, setIncomesData] = useState([]);
   const categories = ['Salary', 'Freelance', 'Investment', 'Other'];
+ 
 
   useEffect(() => {
-    localStorage.setItem('incomes', JSON.stringify(incomes));
-  }, [incomes]);
+    const storedName = localStorage.getItem('username');
+    if (storedName) {
+      const parsedName = JSON.parse(storedName);
+      setUsername(parsedName.firstName); 
+    }
+  }, [incomesData]);
 
   const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(incomes);
+    const ws = XLSX.utils.json_to_sheet(incomesData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Incomes");
     XLSX.writeFile(wb, "Incomes.xlsx");
   };
 
-  const handleEdit = (income) => {
-    setEditing(true);
-    setCurrentIncome(income);
-    setName(income.name);
-    setAmount(income.amount);
-    setDate(income.date);
-    setDescription(income.description);
-    setIsPaid(income.status === "PAID");
-    setCategory(income.category);
-  };
+  //new
+  useEffect(() => {
+    const fetchIncomes = async () => {
+      const token = Cookies.get('token'); 
+      if (!token) {
+        console.error("No token found. User is not authenticated.");
+        return;
+      }
 
-  const handleSubmit = (e) => {
+      try {
+        const response = await axios.get(
+          "http://localhost:8095/api/v1/income/my-incomes",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, 
+            },
+          }
+        );
+        console.log("Fetched incomes:", response.data);
+        setIncomesData(response.data); 
+      } catch (error) {
+        console.error("Error fetching incomes:", error.response?.data || error.message);
+      }
+    };
+    fetchIncomes(); 
+  }, []);
+   
+  //
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (editing) {
+      const isConfirmed = window.confirm("Are you sure you want to update this income?");
+      if (!isConfirmed) {
+        return;
+      }
+      const updatedIncome = {
+        id: currentIncome.id,
+        name,
+        amount,
+        date,
+        description,
+        category,
+      };
+      const token = Cookies.get('token');
+      try {
+        const response = await axios.put(
+          `http://localhost:8095/api/v1/income/update/${currentIncome.id}`,
+          updatedIncome,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        console.log('Success:', response.data);
+        setIncomesData(incomesData.map(income => 
+          income.id === currentIncome.id ? { ...income, ...response.data } : income
+        ));
+      } catch (error) {
+        console.error('Error:', error.response ? error.response.data : error.message);
+      }
+      resetForm();
+     // setEditing(false);
+    } else {
+      
+      
     if (!name || !amount || !date || !description || !category) {
       alert("All fields are required, including the category.");
       return;
@@ -61,25 +119,49 @@ function Incomes() {
     if (!isConfirmed) {
       return;
     }
-
     const incomeData = {
-      id: editing ? currentIncome.id : Date.now(),
+    //  id: editing ? currentIncome.id : Date.now(),
       name,
       amount,
       date,
       description,
-      status: isPaid ? "PAID" : "DUE",
+     // status: isPaid ? "PAID" : "DUE",
       category,
     };
+    const token = Cookies.get('token');
+     
+     const list = await axios.get(
+          "http://localhost:8095/api/v1/income/my-incomes",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+         
+        );
+        setIncomesData(list.data);
 
-    if (editing) {
-      setIncomes(incomes.map(income => income.id === currentIncome.id ? incomeData : income));
-    } else {
-      setIncomes([...incomes, incomeData]);
-    }
+       try {
+            const response = await axios.post(
+              "http://localhost:8095/api/v1/income/create",
+              incomeData,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );    
+            setIncomesData([...incomesData, response.data]);
+            
+          } catch (error) {
+            console.error('Error while sending expense data:', error);
+          }
+
+
 
     resetForm();
   };
+}
 
   const resetForm = () => {
     setName('');
@@ -92,27 +174,11 @@ function Incomes() {
     setCategory('');
   };
 
-  const handleRemove = (id) => {
-    const isConfirmed = window.confirm("Are you sure you want to remove this income?");
-    if (isConfirmed) {
-      setIncomes(incomes.filter(income => income.id !== id));
-    }
-  };
 
-  const totalIncome = incomes.reduce((total, income) => total + parseFloat(income.amount), 0);
 
-  const filteredIncomes = searchQuery.length > 0
-    ? incomes.filter(income =>
-        income.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        income.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (income.category?.toLowerCase() || '').includes(searchQuery.toLowerCase())
-      )
-    : incomes;
-
-  // Pagination logic
   const indexOfLastIncome = currentPage * incomesPerPage;
   const indexOfFirstIncome = indexOfLastIncome - incomesPerPage;
-  const currentIncomes = filteredIncomes.slice(indexOfFirstIncome, indexOfLastIncome);
+ // const currentIncomes = filteredIncomes.slice(indexOfFirstIncome, indexOfLastIncome);
 
   // Change page function
   const handlePreviousPage = () => {
@@ -120,23 +186,44 @@ function Incomes() {
   };
 
   const handleNextPage = () => {
-    setCurrentPage(prev => prev * incomesPerPage < filteredIncomes.length ? prev + 1 : prev);
+  //  setCurrentPage(prev => prev * incomesPerPage < filteredIncomes.length ? prev + 1 : prev);
   };
 
-  const chartData = {
-    labels: incomes.map(income => new Date(income.date)),
-    datasets: [
-      {
-        label: 'Total Income',
-        data: incomes.map(income => income.amount),
-        fill: false,
-        backgroundColor: 'rgba(75,192,192,0.2)',
-        borderColor: 'rgba(75,192,192,1)',
-        borderWidth: 2,
-      },
-    ],
-  };
+
   
+  const handleRemove = async (id) => {
+    const isConfirmed = window.confirm("Are you sure you want to remove this expense?");
+    const token = Cookies.get('token');
+     
+    try {
+      const response = await axios.delete(`http://localhost:8095/api/v1/income/DeleteIncome/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      });
+      console.log('Success:', response.data);
+    } catch (error) {
+      console.error('Error:', error.response ? error.response.data : error.message);
+    }
+     console.log("marrryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
+    if (isConfirmed) {
+      setIncomesData(incomesData.filter(expense => expense.id !== id));
+    }
+  };
+
+  
+
+  const handleEdit = async (income) => {
+    setCurrentIncome(income);
+    setName(income.name);
+    setAmount(income.amount);
+    setDate(income.date);
+    setDescription(income.description);
+    setIsPaid(income.status === "PAID");
+    setCategory(income.category);
+    setEditing(true);
+
+  }
   const chartOptions = {
     scales: {
       x: {
@@ -157,6 +244,7 @@ function Incomes() {
       },
     },
   };
+
   
   return (
     <Container fluid>
@@ -166,7 +254,7 @@ function Incomes() {
         </Col>
         <Col md={10} className="main">
         <BreadcrumbAndProfile 
-           username="Mr. French Pitbull" 
+           username={Username1} 
           role="Freelancer React Developer" 
           pageTitle="Incomes"
           breadcrumbItems={[
@@ -191,7 +279,7 @@ function Incomes() {
       <Card.Body>
         <Card.Title>Total Income</Card.Title>
         <Card.Text>
-          Total: €{totalIncome.toFixed(2)}
+         
         </Card.Text>
       </Card.Body>
     </Card>
@@ -200,7 +288,7 @@ function Incomes() {
 
     <Col md={6}>
     <div className="chart-container">
-      <Line data={chartData} options={chartOptions} />
+      
     </div>
   </Col>
 </Row>
@@ -255,16 +343,16 @@ function Incomes() {
 
 
 <ListGroup className="mt-3">
-  {filteredIncomes.map((income) => (
-    <ListGroup.Item key={income.id} className="list-group-item">
+  {incomesData.map((IncomesData) => (
+    <ListGroup.Item key={IncomesData.id} className="list-group-item">
       <div className="expense-details">
-        {`${income.name} - Amount: €${income.amount} - Date: ${income.date} - Type: ${income.description} - Category: ${income.category || 'Not specified'} - Status: ${income.status}`}
+        {` ${IncomesData.id}-Name: ${IncomesData.name} - Amount: €${IncomesData.amount} - Date: ${IncomesData.date} - Type: ${IncomesData.description} - Category: ${IncomesData.category || 'Not specified'} - Status: ${IncomesData.status}`}
       </div>
       <div className="button-group">
-        <Button className="edit" size="sm" onClick={() => handleEdit(income)} style={{ marginRight: '5px' }}>
+        <Button className="edit" size="sm" onClick={() => handleEdit(IncomesData)} style={{ marginRight: '5px' }}>
           <FontAwesomeIcon icon={faPenToSquare} className="icon-left"/>Edit
         </Button>
-        <Button variant="danger" size="sm" onClick={() => handleRemove(income.id)}>
+        <Button variant="danger" size="sm"  onClick={() => handleRemove(IncomesData.id)}>
           <FontAwesomeIcon icon={faTrashCan} className="icon-left"/>Remove
         </Button>
       </div>
@@ -279,7 +367,7 @@ function Incomes() {
                     {/* Pagination Controls */}
             <div className="d-flex justify-content-between mt-3">
             <Button onClick={handlePreviousPage} className="page" disabled={currentPage === 1}><FontAwesomeIcon icon={faArrowCircleLeft} /></Button>
-            <Button onClick={handleNextPage} className="page" disabled={currentPage * incomesPerPage >= incomes.length}><FontAwesomeIcon icon={faArrowCircleRight} /></Button>
+           
           </div>
         </Col>
       </Row>
