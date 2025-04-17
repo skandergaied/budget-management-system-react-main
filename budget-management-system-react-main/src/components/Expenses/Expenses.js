@@ -76,7 +76,7 @@ function Expenses() {
 
       try {
         const response = await axios.get(
-          "http://localhost:8095/api/v1/expense/Alx",
+          "http://localhost:8095/api/v1/expense/all",
           {
             headers: {
               Authorization: `Bearer ${token}`, 
@@ -164,7 +164,7 @@ function Expenses() {
     const token = Cookies.get('token');
      
     const listtt = await axios.get(
-      "http://localhost:8095/api/v1/expense/Alx",
+      "http://localhost:8095/api/v1/expense/all",
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -178,7 +178,7 @@ function Expenses() {
     
     try {
       const response = await axios.post(
-        "http://localhost:8095/api/v1/expense/SKander",
+        "http://localhost:8095/api/v1/expense/create",
         expenseData,
         {
           headers: {
@@ -224,7 +224,7 @@ function Expenses() {
     const token = Cookies.get('token');
      
     try {
-      const response = await axios.delete(`http://localhost:8095/api/v1/expense/Deleteexpense/${id}`, {
+      const response = await axios.delete(`http://localhost:8095/api/v1/expense/delete/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         }
