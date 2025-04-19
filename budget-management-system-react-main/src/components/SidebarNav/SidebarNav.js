@@ -4,7 +4,7 @@ import { Nav } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
-import { faHome, faWallet, faDollarSign } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faWallet, faDollarSign ,faNewspaper } from '@fortawesome/free-solid-svg-icons';
 import './SidebarNav.css';
 
 function SidebarNav() {
@@ -16,8 +16,19 @@ function SidebarNav() {
       <Nav.Link as={Link} to="/dashboard"><FontAwesomeIcon icon={faHome} className="nav-icon"/> Dashboard</Nav.Link>
       <Nav.Link as={Link} to="/incomes"><FontAwesomeIcon icon={faDollarSign} className="nav-icon" /> Incomes</Nav.Link>
       <Nav.Link as={Link} to="/expenses"><FontAwesomeIcon icon={faWallet} className="nav-icon" /> Expenses</Nav.Link>
+      <Nav.Link as={Link} to="/news"><FontAwesomeIcon icon={faNewspaper} className="nav-icon" /> News</Nav.Link>
       {/* Exit Link */}
-      <Nav.Link as={Link} to="/signout" className="exit-link">
+      <Nav.Link as={Link} to="/signout" className="exit-link"  onClick={() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('username');
+        localStorage.removeItem('expensesAmount');
+        localStorage.removeItem('incomes');
+        localStorage.removeItem('totalIncomes');
+        localStorage.removeItem('totalExpenses');
+        localStorage.removeItem('total');
+        window.location.href = '/signout';
+      }
+      }>
        Sign Out
       </Nav.Link>
       <a href="https://github.com/igordinuzzi" className="github-link" target="_blank" rel="noopener noreferrer">

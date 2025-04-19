@@ -3,15 +3,19 @@ import { Button, Form, ListGroup, Container, Row, Col, Card, InputGroup, FormCon
 import SidebarNav from '../SidebarNav/SidebarNav';
 import BreadcrumbAndProfile from '../BreadcrumbAndProfile/BreadcrumbAndProfile';
 import * as XLSX from 'xlsx';
-
+import './incomes.css';
 import 'chartjs-adapter-date-fns';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExcel, faArrowCircleLeft, faPlusCircle, faPenToSquare, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'framer-motion';
-import Cookies from 'js-cookie';
+import { fetchData } from '../utils/api';
 import axios from "axios";
+import Cookies from 'js-cookie';
 import { useNavigate} from 'react-router-dom';
+import Table from 'react-bootstrap/Table';
+
 function Incomes() {
+
   const [Username1, setUsername] = useState('');
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
@@ -27,8 +31,10 @@ function Incomes() {
   const navigate = useNavigate();
   const [incomesData, setIncomesData] = useState([]);
   const categories = ['Salary', 'Freelance', 'Investment', 'Other'];
- 
-
+  
+  
+  
+  //localStorage.setItem('incomes', JSON.stringify(totalAmount));
   useEffect(() => {
     const storedName = localStorage.getItem('username');
     if (storedName) {
@@ -47,23 +53,9 @@ function Incomes() {
   //new
   useEffect(() => {
     const fetchIncomes = async () => {
-      const token = Cookies.get('token'); 
-      if (!token) {
-        console.error("No token found. User is not authenticated.");
-        return;
-      }
-
       try {
-        const response = await axios.get(
-          "http://localhost:8095/api/v1/income/my-incomes",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`, 
-            },
-          }
-        );
-        console.log("Fetched incomes:", response.data);
-        setIncomesData(response.data); 
+        const response = await fetchData("http://localhost:8095/api/v1/income/my-incomes");
+        setIncomesData(response); 
       } catch (error) {
         console.error("Error fetching incomes:", error.response?.data || error.message);
       }
@@ -71,7 +63,7 @@ function Incomes() {
     fetchIncomes(); 
   }, []);
    
-  //
+  const totalAmount = incomesData.reduce((sum, item) => sum + parseFloat(item.amount), 0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -205,7 +197,7 @@ function Incomes() {
     } catch (error) {
       console.error('Error:', error.response ? error.response.data : error.message);
     }
-     console.log("marrryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
+     
     if (isConfirmed) {
       setIncomesData(incomesData.filter(expense => expense.id !== id));
     }
@@ -264,11 +256,44 @@ function Incomes() {
           />
           <InputGroup className="mb-3">
             <FormControl
-              placeholder="Search incomes..."
+               placeholder="Search by date, name, or category..."
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </InputGroup>
+
+
           <Row>
+
+          {searchQuery.trim() !== '' && (
+    <Table className="circular-corners"  striped bordered hover responsive isHovered >
+      <thead>
+        <tr >
+          <th >Name</th>
+          <th >Description</th>
+          <th>Amount</th>
+          <th>Date</th>
+          <th>Category</th>
+        </tr>
+      </thead>
+      <tbody>
+        {incomesData
+          .filter((item) => item.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.amount.toString().includes(searchQuery) ||
+          item.category.toLowerCase().includes(searchQuery.toLowerCase()))
+          .map((item, index) => (
+            <tr key={index}>
+              <td>{item.name}</td>
+              <td>{item.description}</td>
+              <td>{item.amount} €</td>
+              <td>{item.date}</td>
+              <td>{item.category}</td>
+            </tr>
+          ))}
+      </tbody>
+    </Table>
+)}
           <Col md={6}>
   <motion.div
     initial={{ opacity: 0, y: 20 }} // Initial state: transparent and slightly below its final position
@@ -279,7 +304,7 @@ function Incomes() {
       <Card.Body>
         <Card.Title>Total Income</Card.Title>
         <Card.Text>
-         
+         {totalAmount} €
         </Card.Text>
       </Card.Body>
     </Card>
@@ -349,10 +374,10 @@ function Incomes() {
         {` ${IncomesData.id}-Name: ${IncomesData.name} - Amount: €${IncomesData.amount} - Date: ${IncomesData.date} - Type: ${IncomesData.description} - Category: ${IncomesData.category || 'Not specified'} - Status: ${IncomesData.status}`}
       </div>
       <div className="button-group">
-        <Button className="edit" size="sm" onClick={() => handleEdit(IncomesData)} style={{ marginRight: '5px' }}>
+        <Button className="edit" size="sm" onClick={() => handleEdit(IncomesData)} style={{backgroundColor:'#004883', color: 'white', marginRight: '5px' }}>
           <FontAwesomeIcon icon={faPenToSquare} className="icon-left"/>Edit
         </Button>
-        <Button variant="danger" size="sm"  onClick={() => handleRemove(IncomesData.id)}>
+        <Button variant="danger" size="sm"  onClick={() => handleRemove(IncomesData.id)} style={{backgroundColor:'#ff4d4d', color: 'white'}}>
           <FontAwesomeIcon icon={faTrashCan} className="icon-left"/>Remove
         </Button>
       </div>

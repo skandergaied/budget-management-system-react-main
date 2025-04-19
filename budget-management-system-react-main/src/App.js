@@ -6,6 +6,9 @@ import Dashboard from './components/Dashboard/Dashboard';
 import Incomes from './components/Incomes/Incomes';
 import Expenses from './components/Expenses/Expenses';
 import SignOut from './components/SignOut/SignOut';
+
+import News from './components/News/News';
+
 import './App.css';
 
 function App() {
@@ -15,24 +18,18 @@ function App() {
   });
 
   const [expenses, setExpenses] = useState(() => {
-    const savedExpenses = localStorage.getItem('expenses');
+    const savedExpenses = localStorage.getItem('expensesAmount');
     return savedExpenses ? JSON.parse(savedExpenses) : [];
   });
 
   // Calculate total incomes
-  const totalIncomes = incomes.reduce((total, income) => total + parseFloat(income.amount), 0);
-
+  const totalIncomes = localStorage.getItem('incomes');
   // Calculate total expenses
-  const totalExpenses = expenses.reduce((total, expense) => total + parseFloat(expense.amount), 0);
+  const totalExpenses = localStorage.getItem('expensesAmount');
 
   // Persist incomes and expenses to localStorage
-  useEffect(() => {
-    localStorage.setItem('incomes', JSON.stringify(incomes));
-  }, [incomes]);
+ 
 
-  useEffect(() => {
-    localStorage.setItem('expenses', JSON.stringify(expenses));
-  }, [expenses]);
 
   return (
     <Router>
@@ -43,6 +40,7 @@ function App() {
         <Route path="/incomes" element={<Incomes incomes={incomes} setIncomes={setIncomes} />} />
         <Route path="/expenses" element={<Expenses expenses={expenses} setExpenses={setExpenses} />} />
         <Route path="/signout" element={<SignOut />} />
+        <Route path="/news" element={<News/>} />
       </Routes>
     </Router>
   );

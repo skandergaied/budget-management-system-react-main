@@ -12,6 +12,8 @@ import { motion } from 'framer-motion';
 import axios from "axios";
 import Cookies from 'js-cookie';
 import { useNavigate} from 'react-router-dom';
+import Table from 'react-bootstrap/Table';
+import { fetchData } from '../utils/api';
 function Expenses() {
   const [expenses, setExpenses] = useState(() => {
     const savedExpenses = localStorage.getItem('expenses');
@@ -28,12 +30,14 @@ function Expenses() {
   const [category, setCategory] = useState(''); // State for storing selected category
   const [currentPage, setCurrentPage] = useState(1);
   const [expensesPerPage] = useState(5);
-  
   const [searchQuery, setSearchQuery] = useState(''); // State for search query
   const [expensesData, setExpensesData] = useState([]);
   const navigate = useNavigate();
   const categories = ['Utility', 'Rent', 'Groceries', 'Entertainment', 'Other']; // Example categories for expenses
-
+  const totalAmount = expensesData.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+  localStorage.setItem('expensesAmount', JSON.stringify(totalAmount));
+  
+  
   useEffect(() => {
     localStorage.setItem('expenses', JSON.stringify(expenses));
     const storedName = localStorage.getItem('username');
@@ -73,26 +77,18 @@ function Expenses() {
         console.error("No token found. User is not authenticated.");
         return;
       }
-
+     
       try {
-        const response = await axios.get(
-          "http://localhost:8095/api/v1/expense/all",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`, 
-            },
-          }
-        );
-        console.log("Fetched incomes:", response.data);
-        setExpensesData(response.data); 
+        const response = await fetchData("http://localhost:8095/api/v1/expense/all");
+        setExpensesData(response); 
       } catch (error) {
         console.error("Error fetching incomes:", error.response?.data || error.message);
       }
     };
     fetchIncomes(); 
-  }, []);
+  }, [],);
 
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -186,7 +182,8 @@ function Expenses() {
           },
         }
       );
-      console.log("Expense added successfully:ddddddddddddddddddddddddddddd", response.data);
+      console.log("Expense added:", response.data);
+      
       setExpensesData([...expensesData, response.data]);
       
       
@@ -233,7 +230,6 @@ function Expenses() {
     } catch (error) {
       console.error('Error:', error.response ? error.response.data : error.message);
     }
-     console.log("marrryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
     if (isConfirmed) {
       setExpensesData(expensesData.filter(expense => expense.id !== id));
     }
@@ -313,17 +309,49 @@ function Expenses() {
           { name: 'Dashboard', path: '/dashboard', active: false },
           { name: 'Expenses', path: '/expenses', active: true }
           ]}
-          />
-            {/* Search Bar */}
-            <InputGroup className="mb-3">
-            <FormControl
-              placeholder="Search expenses..."
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+          /> 
+
+            
+            <InputGroup className="mb-3" >
+            <FormControl  placeholder="Search expenses by date..." onChange={(e) => setSearchQuery(e.target.value)} />
           </InputGroup>
           <Row>
+          {searchQuery.trim() !== '' && (
+    <Table striped bordered hover responsive isHovered>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Amount</th>
+          <th>Date</th>
+          <th>Category</th>
+        </tr>
+      </thead>
+      <tbody>
+        {expensesData
+          .filter((item) => item.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.amount.toString().includes(searchQuery) ||
+          item.category.toLowerCase().includes(searchQuery.toLowerCase()))
+          .map((item, index) => (
+            <tr key={index}>
+              <td>{item.name}</td>
+              <td>{item.description}</td>
+              <td>{item.amount} €</td>
+              <td>{item.date}</td>
+              <td>{item.category}</td>
+            </tr>
+          ))}
+      </tbody>
+    </Table>
+)}
           <Col md={6}>
+
+          
   <motion.div
+
+     
     initial={{ opacity: 0, y: 20 }} // Start from slightly below and transparent
     animate={{ opacity: 1, y: 0 }} // Animate to fully visible and in its final position
     transition={{ duration: 0.5, delay: 0.3 }} // Customize duration and add a delay
@@ -332,7 +360,7 @@ function Expenses() {
       <Card.Body>
         <Card.Title>Total Expense</Card.Title>
         <Card.Text>
-         
+         {totalAmount} €
         </Card.Text>
       </Card.Body>
     </Card>
@@ -400,9 +428,9 @@ function Expenses() {
         {` ${expensesData.id}-Name:${expensesData?.name} - Amount: €${expensesData?.amount} - Date: ${expensesData?.date} - Type: ${expensesData?.description} - Category: ${expensesData?.category || 'Not specified'} - Status: ${expensesData?.status}`}
       </div>
       <div className="button-group">
-        <Button className="edit" size="sm" onClick={() => handleEdit(expensesData)} style={{ marginRight: '5px' }}>
+        <Button className="edit" size="sm" class="btn"  onClick={() => handleEdit(expensesData)} style={{backgroundColor:'#004883', color: 'white', marginRight: '5px' }}>
           <FontAwesomeIcon icon={faPenToSquare} className="icon-left"/>Edit </Button> 
-        <Button variant="danger" size="sm" onClick={() => handleRemove(expensesData.id)}>
+        <Button variant="danger" size="sm" onClick={() => handleRemove(expensesData.id)} style={{backgroundColor:'#ff4d4d', color: 'white'}}>
           <FontAwesomeIcon icon={faTrashCan} className="icon-left" />Remove  </Button>
       </div>
     </ListGroup.Item>

@@ -1,6 +1,10 @@
 package com.example.LoginRegister.Controller;
 
+import java.sql.Date;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,7 +14,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
  import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
- import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import com.example.LoginRegister.Request.ExpenseRequest;
 import com.example.LoginRegister.dtos.ExpenseDto;
 import com.example.LoginRegister.dtos.IncomeDto;
@@ -70,24 +75,25 @@ public class ExpenseController {
 
     // ✅ Get all expenses for the authenticated user
     @GetMapping("/all")
-    public ResponseEntity<?> getExpenses(HttpServletRequest httpRequest) {
+    public ResponseEntity<?> findExpense( HttpServletRequest httpRequest) {
         try {
-            String authHeader = httpRequest.getHeader("Authorization");
-            String token = authHeader.substring(7);
-            String email = jwtService.extractUsername(token);
+        String authHeader = httpRequest.getHeader("Authorization");
 
-            User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+         System.out.println("Auth header: " + httpRequest.getHeader("Authorization"));
+        String token = authHeader.substring(7);
+         String emailString = jwtService.extractUsername(token);
+        User user = userRepository.findByEmail(emailString).orElseThrow(() -> new RuntimeException("User not found"));
+       long userId = user.getId();
 
-            return ResponseEntity.ok(service.findby(user.getId()));
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error: " + e.getMessage());
-        }
+        return ResponseEntity.ok(service.findby(userId));
+    } catch (Exception e) {
+        e.printStackTrace();
+        System.err.println("Error:ddddddddddddddddddddddddddddmmmmmmmmmmmùùùùùùùùùùùùùùùùùù " + e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body("Errordddddddddd: " + e.getMessage());
     }
+      
+}       
 
     // ✅ Delete an expense by ID
     @DeleteMapping("/delete/{id}")
@@ -131,5 +137,7 @@ public class ExpenseController {
                 .body("Error: " + e.getMessage());
         }
     }
+
+    
 }
 

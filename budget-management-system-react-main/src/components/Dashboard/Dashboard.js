@@ -3,17 +3,18 @@ import { Container, Row, Col, Button } from 'react-bootstrap';
 import SidebarNav from '../SidebarNav/SidebarNav';
 import BreadcrumbAndProfile from '../BreadcrumbAndProfile/BreadcrumbAndProfile';
 import InfoCard from '../InfoCard/InfoCard';
-import NewsCard from '../NewsCard/NewsCard'; // Update the import path
 import './Dashboard.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRotateRight } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'framer-motion';
 import React, { useState, useEffect } from 'react';
-
+import { fetchData } from '../utils/api';
 function Dashboard({ totalIncomes, totalExpenses }) {
-  // Calculate the total financial data
-  const total = totalIncomes + totalExpenses;
-  const [Username1, setUsername] = useState('');
+  
+  
+  const [expensesData, setExpensesData] = useState([0]);
+ 
+  const [incomesData, setIncomesData] = useState([0]); // State to hold the fetched incomes data
   // Function to reload the page
   const handleReload = () => {
     window.location.reload();
@@ -24,10 +25,37 @@ function Dashboard({ totalIncomes, totalExpenses }) {
     const storedName = localStorage.getItem('username');
     if (storedName) {
       const parsedName = JSON.parse(storedName); 
-      setUsername(parsedName.firstName); 
     }
-  }, []);
+    const fetchIncomes = async () => {
+          
+          try {
+            const fetchedIncomes = await fetchData("http://localhost:8095/api/v1/income/my-incomes");
+            
+            console.log("Fetched incomes:", fetchedIncomes);
+            const totalAmount = fetchedIncomes.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+            setIncomesData(totalAmount); 
+            console.log("Total incomes:", totalAmount);
+          } catch (error) {
+            console.error("Error fetching incomes:", error.response?.data || error.message);
+          }
+        };
+        fetchIncomes(); 
+        const fetchExpense = async () => {
+          try {
+            
+            const fetchedExpense = await fetchData("http://localhost:8095/api/v1/expense/all");
+            const totalExpense = fetchedExpense.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+            setExpensesData(totalExpense);
+            
+          } catch (error) {
+            console.error("Error fetching incomes:", error.response?.data || error.message);
+          }
+        };
+        fetchExpense(); 
 
+    
+  }, []);
+  const total = incomesData - expensesData;
   return (
 <Container fluid>
   <Row>
@@ -36,7 +64,6 @@ function Dashboard({ totalIncomes, totalExpenses }) {
     </Col>
     <Col md={10} className="main-content main">
       <BreadcrumbAndProfile 
-        username={Username1}
         role="Freelancer React Developer" 
         pageTitle="Dashboard"
         breadcrumbItems={[
@@ -82,7 +109,7 @@ function Dashboard({ totalIncomes, totalExpenses }) {
     >
       <InfoCard
         title="Incomes"
-        value={`$${totalIncomes}`}
+        value={`$${incomesData}`}
         linkText="Add or manage your Income"
         linkTo="/incomes"
       />
@@ -96,7 +123,7 @@ function Dashboard({ totalIncomes, totalExpenses }) {
     >
       <InfoCard
         title="Expenses"
-        value={`$${totalExpenses}`}
+        value={`$${expensesData}`}
         linkText="Add or manage your expenses"
         linkTo="/expenses"
       />
@@ -106,45 +133,7 @@ function Dashboard({ totalIncomes, totalExpenses }) {
 
 
          {/* Section for news cards */}
-         <div className="news-section">
-            <h2 className="news-section-title">Latest News</h2>
-            <div className="news-cards">
-              {/* Custom content for each topic */}
-              <Row>
-  <Col md={4}>
-    <NewsCard
-      topic="personal-finance"
-      image={`${process.env.PUBLIC_URL}/images/News/finance.jpg`}
-      alt="personal finance"
-      title="Unlocking Financial Freedom: Your Guide to Smart Money Moves"
-      description="Discover the secrets to financial success! From savvy investing strategies to practical budgeting tips, empower yourself to achieve your financial dreams and live life on your terms."
-      className="news-card" // Add custom class
-    />
-  </Col>
-  <Col md={4}>
-    <NewsCard
-      topic="freelancing"
-      image={`${process.env.PUBLIC_URL}/images/News/freelancing.jpg`}
-      alt="freelancing"
-      title="Thriving in the Gig Economy: Insider Tips for Freelancers"
-      description="Join the booming world of freelancing! Get insider insights, expert advice, and actionable tips to excel in the gig economy. From finding lucrative gigs to mastering time management, embark on your journey to freelancing success."
-      className="news-card" // Add custom class
-    />
-  </Col>
-  <Col md={4}>
-    <NewsCard
-      topic="budgeting"
-      image={`${process.env.PUBLIC_URL}/images/News/budgeting.jpg`}
-      alt="budgeting"
-      title="Mastering Your Money: The Art of Stress-Free Budgeting"
-      description="Take control of your finances and transform your life! Learn the art of stress-free budgeting, streamline your expenses, and achieve financial peace of mind. Say goodbye to money worries and hello to a brighter financial future!"
-      className="news-card" // Add custom class
-    />
-  </Col>
-</Row>
-
-            </div>
-          </div>
+       
         </Col>
       </Row>
     </Container>
