@@ -1,0 +1,7 @@
+com\example\LoginRegister\auth\AuthenticationController.class
+com\example\LoginRegister\auth\AuthenticationResponse$AuthenticationResponseBuilder.class
+com\example\LoginRegister\auth\AuthenticationResponse.class
+com\example\LoginRegister\auth\AuthenticationRequest$AuthenticationRequestBuilder.class
+com\example\LoginRegister\auth\RegisterRequest$RegisterRequestBuilder.class
+com\example\LoginRegister\auth\AuthenticationRequest.class
+com\example\LoginRegister\auth\RegisterRequest.class
