@@ -108,7 +108,16 @@ function Sign() {
   };
 
   return (
-<div className="signin">
+<div
+  className="signin"
+  style={{
+    backgroundImage: "url('https://media.istockphoto.com/id/473279561/video/charts-and-numbers.jpg?s=640x640&k=20&c=ZTLU6eBGDnjj2hQRO2wbIzXvGjMMSTDeME3CgJeXKQ0=')",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    height: "100vh",
+    padding: "20px",
+  }}
+>
   <div className="signin-container">
     <div className="text-center">
         <p>Sign up to <span className="bold-text">Bee Finance</span></p>

@@ -7,6 +7,8 @@ import SidebarNav from '../SidebarNav/SidebarNav';
 import BreadcrumbAndProfile from '../BreadcrumbAndProfile/BreadcrumbAndProfile';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { motion } from 'framer-motion';
+import Coins from '../CoinScreen/CoinS';
 import { color } from 'framer-motion';
 
 function News({ topic, image, title, description }) { 
@@ -31,6 +33,7 @@ function News({ topic, image, title, description }) {
     </Col>
     
     <Col md={10} className="main-content main">
+    
     <BreadcrumbAndProfile 
             
             role="Freelancer React Developer" 
@@ -41,6 +44,7 @@ function News({ topic, image, title, description }) {
             ]}
           />
          {/* Section for news cards */}
+         
          <div className="news-section">
             <h2 className="news-section-title">Latest News</h2>
             <div className="news-cards">
