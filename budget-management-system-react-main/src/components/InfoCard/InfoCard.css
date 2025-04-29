@@ -3,7 +3,8 @@
     background-color: var(--primary-color);
     border-radius: 8px;
     padding: 20px;
-    margin-bottom: 20px; /* Space between cards */
+    margin-bottom: 0 !important;
+
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
   
@@ -21,3 +22,5 @@
     color: var(--background-color);
   }
   
+  
+ 

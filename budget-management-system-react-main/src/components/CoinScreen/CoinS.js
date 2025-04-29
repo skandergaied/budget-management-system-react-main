@@ -29,17 +29,14 @@ function CoinS() {
   return (
     <div className='coin-app' style={{ padding: '0px', borderRadius: '10px',height: '100vh',width: '100%', display: 'flex'  }}>
       
-      {filteredCoins.map(coin => {
+      {filteredCoins.slice(0, 6).map(coin => {
         return (
           <Coin  
             key={coin.id}
             name={coin.name}
             price={coin.current_price}
             symbol={coin.symbol}
-            marketcap={coin.total_volume}
-            volume={coin.market_cap}
-            image={coin.image}
-            priceChange={coin.price_change_percentage_24h}
+            image={coin.image}     
           />
         );
       })}
