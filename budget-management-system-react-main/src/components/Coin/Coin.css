@@ -46,12 +46,10 @@
   }
   
   .coin-price {
-    width: 110px;
+    width: 100px;
   }
   
-  .coin-volume {
-    width: 155px;
-  }
+ 
   
   .coin-marketcap {
     width: 230px;

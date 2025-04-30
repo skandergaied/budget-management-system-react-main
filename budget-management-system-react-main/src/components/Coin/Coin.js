@@ -29,22 +29,6 @@ const Coin = ({ name, price, symbol, market_cap, total_volume, image, price_chan
       <p style={{ margin: '3px 0', fontSize: '0.8rem' }}>
         Price (₺): <strong>{priceInTry ? priceInTry.toLocaleString(undefined, { maximumFractionDigits: 2 }) : 'N/A'}₺</strong>
       </p>
-  
-      <p style={{ margin: '3px 0', fontSize: '0.8rem' }}>
-        Volume: {total_volume ? `$${total_volume.toLocaleString()}` : 'N/A'}
-      </p>
-  
-      <p style={{
-        color: priceChange < 0 ? '#ff4d4f' : '#52c41a',
-        margin: '3px 0',
-        fontSize: '0.8rem'
-      }}>
-        {priceChange !== undefined ? priceChange.toFixed(2) + '%' : 'N/A'}
-      </p>
-  
-      <p style={{ fontSize: '0.75rem' }}>
-        Mkt Cap: {market_cap ? `$${market_cap.toLocaleString()}` : 'N/A'}
-      </p>
     </div>
   );
 };
