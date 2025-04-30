@@ -55,7 +55,9 @@ function Incomes() {
     const fetchIncomes = async () => {
       try {
         const response = await fetchData("http://localhost:8095/api/v1/income/my-incomes");
-        setIncomesData(response); 
+        setIncomesData(response);
+
+
       } catch (error) {
         console.error("Error fetching incomes:", error.response?.data || error.message);
       }
