@@ -24,10 +24,18 @@ import './Dashboard.css';
 function Dashboard() {
   // State management
   const [expensesData, setExpensesData] = useState(0);
-  const [incomesData, setIncomesData] = useState(0);
+
+  // const [incomesData, setIncomesData] = useState(0);
+
+  const [incomesList, setIncomesList] = useState([]);  // Artık liste tutacağız
+  const [incomesData, setIncomesData] = useState(0);   // Toplamı da ayrı tutuyoruz
+
+
+  // bu 3 değişkeni dinamik hale getiriyoruz
   const salaryAmount = "$4,500";
   const freelancerAmount = "$1,200";
   const investmentAmount = "$800";
+
   const spendingData = {
     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
     datasets: [
@@ -73,9 +81,12 @@ function Dashboard() {
         // Fetch income data
         try {
           const fetchedIncomes = await fetchData("http://localhost:8095/api/v1/income/my-incomes");
-          console.log("Fetched incomes:", fetchedIncomes);
+          setIncomesList(fetchedIncomes); // Listeyi kaydet
           const totalAmount = fetchedIncomes.reduce((sum, item) => sum + parseFloat(item.amount), 0);
           setIncomesData(totalAmount);
+
+
+
           console.log("Total incomes:", totalAmount);
         } catch (error) {
           console.error("Error fetching incomes:", error.response?.data || error.message);
@@ -165,7 +176,7 @@ function Dashboard() {
             </Col>
   
             {/* Expenses */}
-            <Col md={4}  >
+            <Col md={3} height="5h0">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -180,14 +191,14 @@ function Dashboard() {
                 />
               </motion.div>
             </Col>
-           
 
          
           </Row>
-          
   
           {/* Financial Details Section */}
-          <Row className="  justify-content-center mb-7" style={{ marginTop: '90px' ,marginLeft:'20px'}} >
+
+
+          <Row className="justify-content-center mb-7"  style={{ marginTop: '90px' ,marginLeft:'20px'}} >
             {/* Income Component */}
             <Col md={4} lg={5}>
               <motion.div
@@ -205,7 +216,7 @@ function Dashboard() {
             </Col>
   
             {/* Expense Component */}
-            <Col md={6} lg={7} className="h-100"  style={{ marginTop: '60px' }}>
+            <Col md={6} lg={7} className="h-100" style={{ marginTop: '60px' }}>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -220,6 +231,7 @@ function Dashboard() {
           </Row>
   
           {/* Chart Section */}
+
           <Row justify-content-center style={{ marginTop: '90px',marginLeft:'50px' }}>
             <Col md={12} >
               <motion.div
@@ -234,22 +246,25 @@ function Dashboard() {
             </Col>
             
           </Row>
-      
+
         </Col>
 
-        <Col md={2} style={{ marginTop: '200px' }}>
-      
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="dashboard-panel"
-      style={{  borderRadius: '12px', padding: '20px' }}
-    >
-      <Coins />
-    </motion.div>
- 
-        </Col>
+
+      <Col md={2} style={{ marginTop: '200px' }}>
+
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="dashboard-panel"
+            style={{  borderRadius: '12px', padding: '20px' }}
+        >
+          <Coins />
+        </motion.div>
+
+      </Col>
+
+
 
       </Row>
     </Container>

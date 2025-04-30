@@ -2,14 +2,22 @@ package com.example.LoginRegister.config;
  import lombok.RequiredArgsConstructor; 
  import org.springframework.context.annotation.Bean; 
  import org.springframework.context.annotation.Configuration; 
- import org.springframework.security.authentication.AuthenticationProvider; 
- import org.springframework.security.config.annotation.web.builders.HttpSecurity; 
+ import org.springframework.security.authentication.AuthenticationProvider;
+ import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
  import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-  import org.springframework.security.config.http.SessionCreationPolicy; 
-  import org.springframework.security.web.SecurityFilterChain; 
+  import org.springframework.security.config.http.SessionCreationPolicy;
+ import org.springframework.security.core.userdetails.User;
+ import org.springframework.security.core.userdetails.UserDetails;
+ import org.springframework.security.core.userdetails.UserDetailsService;
+ import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+ import org.springframework.security.crypto.password.PasswordEncoder;
+ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+ import org.springframework.security.web.SecurityFilterChain;
   import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-  import org.springframework.web.cors.CorsConfiguration; 
-  import org.springframework.web.filter.CorsFilter;
+  import org.springframework.web.cors.CorsConfiguration;
+ import org.springframework.web.cors.CorsConfigurationSource;
+ import org.springframework.web.filter.CorsFilter;
 
 
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -34,9 +42,11 @@ import java.util.Arrays;
                          .sessionManagement(session -> session  .sessionCreationPolicy(SessionCreationPolicy.STATELESS)  )     
                         .authenticationProvider(authenticationProvider) 
                          .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)  
-                         ;          return http.build();     } 
-                         
-                         
+                         ;          return http.build();     }
+
+
+
+    /*
         @Bean
          public CorsFilter corsFilter() {
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -59,4 +69,30 @@ import java.util.Arrays;
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
 
-        }  } 
+        }
+
+    */
+
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+            CorsConfiguration configuration = new CorsConfiguration();
+            configuration.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));
+            configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+            configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+            configuration.setAllowCredentials(true);
+
+            configuration.setAllowedHeaders(Arrays.asList(
+                    HttpHeaders.ORIGIN,
+                    HttpHeaders.CONTENT_TYPE,
+                    HttpHeaders.ACCEPT,
+                    HttpHeaders.AUTHORIZATION
+            ));
+
+
+            UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+            source.registerCorsConfiguration("/**", configuration);
+            return source;
+        }
+
+
+    }
