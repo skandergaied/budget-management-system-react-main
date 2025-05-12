@@ -1,62 +1,210 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Form, ListGroup, Container, Row, Col, Card, InputGroup, FormControl } from 'react-bootstrap';
-import SidebarNav from '../SidebarNav/SidebarNav';
-import BreadcrumbAndProfile from '../BreadcrumbAndProfile/BreadcrumbAndProfile';
-import * as XLSX from 'xlsx'; // Import xlsx
 import { Chart as ChartJS } from 'chart.js/auto';
 import { Line } from 'react-chartjs-2';
-import 'chartjs-adapter-date-fns';
+import * as XLSX from 'xlsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileExcel, faArrowCircleLeft, faArrowCircleRight, faPlusCircle, faPenToSquare, faTrashCan } from '@fortawesome/free-solid-svg-icons';
+import {
+  faFileExcel,
+  faArrowCircleLeft,
+  faArrowCircleRight,
+  faPlusCircle,
+  faPenToSquare,
+  faTrashCan
+} from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'framer-motion';
 import axios from "axios";
 import Cookies from 'js-cookie';
-import { useNavigate} from 'react-router-dom';
-import Table from 'react-bootstrap/Table';
-import { fetchData } from '../utils/api';
+import { useNavigate } from 'react-router-dom';
+import SidebarNav from '../SidebarNav/SidebarNav';
+import BreadcrumbAndProfile from '../BreadcrumbAndProfile/BreadcrumbAndProfile';
+import './expenses.css';
+import 'chartjs-adapter-date-fns';
+
 function Expenses() {
-  const [expenses, setExpenses] = useState(() => {
-    const savedExpenses = localStorage.getItem('expenses');
-    return savedExpenses ? JSON.parse(savedExpenses) : [];
-  });
+  const [username, setUsername] = useState('');
   const [name, setName] = useState('');
-  const [Username1, setUsername] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
   const [description, setDescription] = useState('');
-  const [isPaid, setIsPaid] = useState(false);
+  const [category, setCategory] = useState('');
   const [editing, setEditing] = useState(false);
   const [currentExpense, setCurrentExpense] = useState(null);
-  const [category, setCategory] = useState(''); // State for storing selected category
   const [currentPage, setCurrentPage] = useState(1);
   const [expensesPerPage] = useState(5);
-  const [searchQuery, setSearchQuery] = useState(''); // State for search query
+  const [searchQuery, setSearchQuery] = useState('');
   const [expensesData, setExpensesData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const categories = ['Utility', 'Rent', 'Groceries', 'Entertainment', 'Other']; // Example categories for expenses
-  const totalAmount = expensesData.reduce((sum, item) => sum + parseFloat(item.amount), 0);
-  localStorage.setItem('expensesAmount', JSON.stringify(totalAmount));
-  
-  
-  useEffect(() => {
-    localStorage.setItem('expenses', JSON.stringify(expenses));
-    const storedName = localStorage.getItem('username');
-    
-    if (storedName) {
-      const parsedName = JSON.parse(storedName); // Parse the stored JSON string
-      setUsername(parsedName.firstName); // Assuming `username` is the first name
-    }
-  }, [expenses]);
 
-  
- 
-  // New function to export incomes to Excel
-    const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(expenses);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Expenses");
-    XLSX.writeFile(wb, "Expenses.xlsx");
-  };    
+  const categories = ['Utility', 'Rent', 'Groceries', 'Entertainment', 'Transportation', 'Healthcare', 'Financial', 'Personal', 'Education', 'Home', 'Social', 'Daily', 'Other'];
+
+  useEffect(() => {
+    const fetchUserData = () => {
+      const storedName = localStorage.getItem('username');
+      if (storedName) {
+        try {
+          const parsedName = JSON.parse(storedName);
+          setUsername(parsedName.firstName || '');
+        } catch (e) {
+          console.error("Error parsing username:", e);
+        }
+      }
+    };
+
+    const fetchExpenses = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const token = Cookies.get('token');
+        if (!token) {
+          navigate('/login');
+          return;
+        }
+
+        const response = await axios.get(
+            "http://localhost:8095/api/v1/expense/all",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+        );
+        setExpensesData(response.data);
+      } catch (error) {
+        console.error("Error fetching expenses:", error);
+        setError(error.response?.data?.message || "Failed to fetch expenses");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+    fetchExpenses();
+  }, [navigate]);
+
+  const totalAmount = expensesData.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
+
+  const chartData = {
+    labels: expensesData.map(expense => new Date(expense.date)),
+    datasets: [
+      {
+        label: 'Expense Trend',
+        data: expensesData.map(expense => parseFloat(expense.amount)),
+        fill: false,
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        borderColor: 'rgba(255, 99, 132, 1)',
+        borderWidth: 2,
+        tension: 0.1
+      }
+    ]
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        type: 'time',
+        time: {
+          unit: 'day',
+          tooltipFormat: 'MMM d, yyyy',
+          displayFormats: {
+            day: 'MMM d'
+          }
+        },
+        title: {
+          display: true,
+          text: 'Date'
+        }
+      },
+      y: {
+        title: {
+          display: true,
+          text: 'Amount (€)'
+        },
+        ticks: {
+          callback: function(value) {
+            return '€' + value;
+          }
+        },
+        suggestedMin: 0
+      }
+    },
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return `${context.dataset.label}: €${context.parsed.y}`;
+          }
+        }
+      }
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!name || !amount || !date || !category) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    const isConfirmed = window.confirm(
+        editing
+            ? "Are you sure you want to update this expense?"
+            : "Are you sure you want to add this expense?"
+    );
+    if (!isConfirmed) return;
+
+    const expenseData = {
+      name,
+      amount: parseFloat(amount),
+      date,
+      description,
+      category
+    };
+
+    const token = Cookies.get('token');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      let response;
+      if (editing) {
+        response = await axios.put(
+            `http://localhost:8095/api/v1/expense/update/${currentExpense.id}`,
+            expenseData,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+        );
+        setExpensesData(expensesData.map(item =>
+            item.id === currentExpense.id ? response.data : item
+        ));
+      } else {
+        response = await axios.post(
+            "http://localhost:8095/api/v1/expense/create",
+            expenseData,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+        );
+        setExpensesData([...expensesData, response.data]);
+      }
+      resetForm();
+    } catch (error) {
+      console.error('Error:', error);
+      alert(error.response?.data?.message || "An error occurred");
+    }
+  };
 
   const handleEdit = (expense) => {
     setEditing(true);
@@ -64,145 +212,29 @@ function Expenses() {
     setName(expense.name);
     setAmount(expense.amount);
     setDate(expense.date);
-    setDescription(expense.description);
-    setIsPaid(expense.status === "PAID");
-    setCategory(expense.category || ''); // Set category for editing
+    setDescription(expense.description || '');
+    setCategory(expense.category);
   };
 
-
-  useEffect(() => {
-    const fetchIncomes = async () => {
-      const token = Cookies.get('token'); 
-      if (!token) {
-        console.error("No token found. User is not authenticated.");
-        return;
-      }
-     
-      try {
-        const response = await fetchData("http://localhost:8095/api/v1/expense/all");
-        setExpensesData(response); 
-      } catch (error) {
-        console.error("Error fetching incomes:", error.response?.data || error.message);
-      }
-    };
-    fetchIncomes(); 
-  }, [],);
-
-  
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (editing) {
-          const isConfirmed = window.confirm("Are you sure you want to update this income?");
-          if (!isConfirmed) {
-            return;
-          }
-          const updatedExpense = {
-            id: currentExpense.id,
-            name,
-            amount,
-            date,
-            description,
-            category,
-          };
-          const token = Cookies.get('token');
-          try {
-            const response = await axios.put(
-              `http://localhost:8095/api/v1/expense/update/${currentExpense.id}`,
-              updatedExpense,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            );
-          
-            setExpensesData(expensesData.map(expense =>
-              expense.id === currentExpense.id
-                ? {
-                    ...expense,
-                    name,
-                    amount,
-                    date,
-                    description,
-                    category
-                  }
-                : expense
-            ));
-            
-          } catch (error) {
-            console.error('Error:', error.response ? error.response.data : error.message);
-          }
-          resetForm();
-         // setEditing(false);
-        } 
-
-    else{
-    if (!name || !amount || !date || !description || !category) {
-      alert("All fields are required, including the category.");
-      return;
-    }
-    const isConfirmed = window.confirm(editing ? "Are you sure you want to update this expense?" : "Are you sure you want to add this expense?");
-    if (!isConfirmed) {
-      return;
-    }
-
-    const expenseData = {
-     // id: editing ? currentExpense.id : Date.now(),
-      name,
-      amount,
-      date,
-      description,
-     // status: isPaid ? "PAID" : "DUE",
-      category, 
-    };
+  const handleRemove = async (id) => {
+    const isConfirmed = window.confirm("Are you sure you want to delete this expense?");
+    if (!isConfirmed) return;
 
     const token = Cookies.get('token');
-     
-    const listtt = await axios.get(
-      "http://localhost:8095/api/v1/expense/all",
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-     
-    );
-     console.log("List of expensesfg:", listtt.data);
-    setExpensesData(listtt.data);
-   
-    
     try {
-      const response = await axios.post(
-        "http://localhost:8095/api/v1/expense/create",
-        expenseData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      await axios.delete(
+          `http://localhost:8095/api/v1/expense/delete/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
       );
-      console.log("Expense added:", response.data);
-      
-      setExpensesData([...expensesData, response.data]);
-      
-      
+      setExpensesData(expensesData.filter(item => item.id !== id));
     } catch (error) {
-      console.error('Error while sending expense data:', error);
+      console.error('Error:', error);
+      alert(error.response?.data?.message || "Failed to delete expense");
     }
-
-       
-     
-      
-
-    if (editing) {
-      setExpenses(expenses.map(expense => expense.id === currentExpense.id ? expenseData : expense));
-    } else {
-      setExpenses([...expenses, expenseData]);
-    }
-
-    resetForm();
-  }
   };
 
   const resetForm = () => {
@@ -210,248 +242,282 @@ function Expenses() {
     setAmount('');
     setDate('');
     setDescription('');
-    setIsPaid(false);
+    setCategory('');
     setEditing(false);
     setCurrentExpense(null);
-    setCategory(''); // Reset category
   };
 
-  const handleRemove = async (id) => {
-    const isConfirmed = window.confirm("Are you sure you want to remove this expense?");
-    const token = Cookies.get('token');
-     
-    try {
-      const response = await axios.delete(`http://localhost:8095/api/v1/expense/delete/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        }
-      });
-      console.log('Success:', response.data);
-    } catch (error) {
-      console.error('Error:', error.response ? error.response.data : error.message);
-    }
-    if (isConfirmed) {
-      setExpensesData(expensesData.filter(expense => expense.id !== id));
-    }
+  const exportToExcel = () => {
+    const ws = XLSX.utils.json_to_sheet(expensesData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Expenses");
+    XLSX.writeFile(wb, "Expenses.xlsx");
   };
-/*
-  const totalExpense = expenses.reduce((total, expense) => total + parseFloat(expense.amount), 0);
-
-  // Filter expenses based on search query
-  const filteredExpenses = searchQuery.length > 0
-    ? expenses.filter(expense =>
-        expense.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        expense.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (expense.category?.toLowerCase() || '').includes(searchQuery.toLowerCase())
-      )
-    : expenses;
 
   // Pagination logic
+  const indexOfLastExpense = currentPage * expensesPerPage;
+  const indexOfFirstExpense = indexOfLastExpense - expensesPerPage;
+  const currentExpenses = expensesData.slice(indexOfFirstExpense, indexOfLastExpense);
+  const totalPages = Math.ceil(expensesData.length / expensesPerPage);
 
-
-  // Handle page navigation
   const handlePreviousPage = () => {
-    setCurrentPage(prev => prev > 1 ? prev - 1 : prev);
+    setCurrentPage(prev => Math.max(prev - 1, 1));
   };
-  
 
   const handleNextPage = () => {
-    setCurrentPage(prev => prev * expensesPerPage < filteredExpenses.length ? prev + 1 : prev);
-  };*/
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  };
 
-  const chartData = {
-    labels: expenses.map(expense => new Date(expense.date)), // Make sure dates are converted to Date objects
-    datasets: [
-      {
-        label: 'Total Expenses',
-        data: expenses.map(expense => expense.amount),
-        fill: false,
-        backgroundColor: 'rgba(75,192,192,0.2)',
-        borderColor: 'rgba(75,192,192,1)',
-        borderWidth: 2,
-      },
-    ],
-  };
-  
-  const chartOptions = {
-    scales: {
-      x: {
-        type: 'time', // Set x-axis scale to time
-        time: {
-          unit: 'day',
-        },
-        title: {
-          display: true,
-          text: 'Date',
-        },
-      },
-      y: {
-        title: {
-          display: true,
-          text: 'Income (€)',
-        },
-      },
-    },
-  };
+  const filteredExpenses = searchQuery
+      ? expensesData.filter(item =>
+          item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.amount.toString().includes(searchQuery) ||
+          item.date.includes(searchQuery) ||
+          item.category.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      : expensesData;
 
   return (
-    <Container fluid>
-      <Row>
-        <Col md={2} className="sidebar">
-          <SidebarNav />
-        </Col>
-        <Col md={10} className="main">
-        <BreadcrumbAndProfile 
-          username={Username1}
-          role="Freelancer React Developer" 
-          pageTitle="Expenses"
-          breadcrumbItems={[
-          { name: 'Dashboard', path: '/dashboard', active: false },
-          { name: 'Expenses', path: '/expenses', active: true }
-          ]}
-          /> 
+      <Container fluid>
+        <Row>
+          <Col md={2} className="sidebar">
+            <SidebarNav />
+          </Col>
+          <Col md={10} className="main">
+            <BreadcrumbAndProfile
+                username={username}
+                role="User"
+                pageTitle="Expenses"
+                breadcrumbItems={[
+                  { name: 'Dashboard', path: '/dashboard', active: false },
+                  { name: 'Expenses', path: '/expenses', active: true }
+                ]}
+            />
 
-            
-            <InputGroup className="mb-3" >
-            <FormControl  placeholder="Search expenses by date..." onChange={(e) => setSearchQuery(e.target.value)} />
-          </InputGroup>
-          <Row>
-          {searchQuery.trim() !== '' && (
-    <Table striped bordered hover responsive isHovered>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Description</th>
-          <th>Amount</th>
-          <th>Date</th>
-          <th>Category</th>
-        </tr>
-      </thead>
-      <tbody>
-        {expensesData
-          .filter((item) => item.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.amount.toString().includes(searchQuery) ||
-          item.category.toLowerCase().includes(searchQuery.toLowerCase()))
-          .map((item, index) => (
-            <tr key={index}>
-              <td>{item.name}</td>
-              <td>{item.description}</td>
-              <td>{item.amount} €</td>
-              <td>{item.date}</td>
-              <td>{item.category}</td>
-            </tr>
-          ))}
-      </tbody>
-    </Table>
-)}
-          <Col md={6}>
+            {error && (
+                <div className="alert alert-danger">
+                  {error}
+                </div>
+            )}
 
-          
-  <motion.div
+            <InputGroup className="mb-3">
+              <FormControl
+                  placeholder="Search expenses..."
+                  onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </InputGroup>
 
-     
-    initial={{ opacity: 0, y: 20 }} // Start from slightly below and transparent
-    animate={{ opacity: 1, y: 0 }} // Animate to fully visible and in its final position
-    transition={{ duration: 0.5, delay: 0.3 }} // Customize duration and add a delay
-  >
-    <Card className="mt-3 total">
-      <Card.Body>
-        <Card.Title>Total Expense</Card.Title>
-        <Card.Text>
-         {totalAmount} €
-        </Card.Text>
-      </Card.Body>
-    </Card>
-  </motion.div>
-</Col>
+            <Row>
+              <Col md={6}>
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                >
+                  <Card className="mt-3 total">
+                    <Card.Body>
+                      <Card.Title>Total Expenses</Card.Title>
+                      <Card.Text className="display-6">
+                        €{totalAmount.toFixed(2)}
+                      </Card.Text>
+                    </Card.Body>
+                  </Card>
+                </motion.div>
+              </Col>
+              <Col md={6}>
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                >
+                  <Card className="mt-3">
+                    <Card.Body>
+                      <Card.Title>Expense Trends</Card.Title>
+                      <div style={{ height: '250px' }}>
+                        <Line data={chartData} options={chartOptions} />
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </motion.div>
+              </Col>
+            </Row>
 
-  <Col md={6}>
-    <div className="chart-container">
-      <Line data={chartData} options={chartOptions} />
-    </div>
-  </Col>
-</Row>
-<Form onSubmit={handleSubmit}>
-  <Row className="grid-row">
-    <Col md={4}>
-      <Form.Group>
-        <Form.Label>Name</Form.Label>
-        <Form.Control type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Expense Name" required />
-      </Form.Group>
-    </Col>
-    <Col md={4}>
-      <Form.Group>
-        <Form.Label>Description</Form.Label>
-        <Form.Control type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Short description" required />
-      </Form.Group>
-    </Col>
-    <Col md={4}>
-      <Form.Group>
-        <Form.Label>Amount</Form.Label>
-        <Form.Control type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Income Amount in Euros" required />
-      </Form.Group>
-    </Col>
-  </Row>
-  <Row className="grid-row">
-    <Col md={4}>
-      <Form.Group>
-        <Form.Label>Date</Form.Label>
-        <Form.Control type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
-      </Form.Group>
-    </Col>
-    <Col md={4}>
-      <Form.Group>
-        <Form.Label>Category</Form.Label>
-        <Form.Select value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option value="">Select a category</option>
-          {categories.map((cat, index) => (
-            <option key={index} value={cat}>{cat}</option>
-          ))}
-        </Form.Select>
-      </Form.Group>
-    </Col>
-    <Col md={4} className="d-flex align-items-center">
-      <Form.Group>
-        <Form.Check type="checkbox" label="Paid" checked={isPaid} onChange={(e) => setIsPaid(e.target.checked)} />
-      </Form.Group>
-    </Col>
-  </Row>
-  <Button type="submit" className="mt-3 primary-button">{editing ? "Update Expense" : "Add Expense"}<FontAwesomeIcon icon={faPlusCircle} className="icon-right"/></Button>
-</Form>
+            <Form onSubmit={handleSubmit} className="mt-4">
+              <Row className="mb-3">
+                <Col md={4}>
+                  <Form.Group controlId="formName">
+                    <Form.Label>Name*</Form.Label>
+                    <Form.Control
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Expense name"
+                        required
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group controlId="formAmount">
+                    <Form.Label>Amount (€)*</Form.Label>
+                    <Form.Control
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="0.00"
+                        required
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group controlId="formDate">
+                    <Form.Label>Date*</Form.Label>
+                    <Form.Control
+                        type="date"
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        required
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Row className="mb-3">
+                <Col md={6}>
+                  <Form.Group controlId="formDescription">
+                    <Form.Label>Description</Form.Label>
+                    <Form.Control
+                        as="textarea"
+                        rows={2}
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="Additional details"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group controlId="formCategory">
+                    <Form.Label>Category*</Form.Label>
+                    <Form.Select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        required
+                    >
+                      <option value="">Select category</option>
+                      {categories.map((cat, index) => (
+                          <option key={index} value={cat}>{cat}</option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Button
+                  variant="primary"
+                  type="submit"
+                  className="me-2"
+              >
+                <FontAwesomeIcon icon={editing ? faPenToSquare : faPlusCircle} className="me-2" />
+                {editing ? 'Update Expense' : 'Add Expense'}
+              </Button>
+              {editing && (
+                  <Button
+                      variant="secondary"
+                      onClick={resetForm}
+                  >
+                    Cancel
+                  </Button>
+              )}
+            </Form>
 
-<ListGroup className="mt-3">
-  {expensesData.map((expensesData) => (
-    <ListGroup.Item key={expensesData?.id} className="list-group-item">
-      <div className="expense-details">
-        {` ${expensesData.id}-Name:${expensesData?.name} - Amount: €${expensesData?.amount} - Date: ${expensesData?.date} - Type: ${expensesData?.description} - Category: ${expensesData?.category || 'Not specified'} - Status: ${expensesData?.status}`}
-      </div>
-      <div className="button-group">
-        <Button className="edit" size="sm" class="btn"  onClick={() => handleEdit(expensesData)} style={{backgroundColor:'#004883', color: 'white', marginRight: '5px' }}>
-          <FontAwesomeIcon icon={faPenToSquare} className="icon-left"/>Edit </Button> 
-        <Button variant="danger" size="sm" onClick={() => handleRemove(expensesData.id)} style={{backgroundColor:'#ff4d4d', color: 'white'}}>
-          <FontAwesomeIcon icon={faTrashCan} className="icon-left" />Remove  </Button>
-      </div>
-    </ListGroup.Item>
-  ))}
-</ListGroup>
+            <div className="mt-4">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5>Expense Records</h5>
+                <Button onClick={exportToExcel} variant="success">
+                  <FontAwesomeIcon icon={faFileExcel} className="me-2" />
+                  Export to Excel
+                </Button>
+              </div>
 
+              {loading ? (
+                  <div className="text-center py-4">
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  </div>
+              ) : (
+                  <>
+                    <ListGroup>
+                      {filteredExpenses.length > 0 ? (
+                          filteredExpenses.slice(indexOfFirstExpense, indexOfLastExpense).map((expense) => (
+                              <ListGroup.Item key={expense.id} className="mb-2">
+                                <div className="d-flex justify-content-between align-items-center">
+                                  <div>
+                                    <h6>{expense.name}</h6>
+                                    <div className="text-muted small">
+                                      <span className="me-3">€{parseFloat(expense.amount).toFixed(2)}</span>
+                                      <span className="me-3">{expense.date}</span>
+                                      <span className="badge bg-info">{expense.category}</span>
+                                    </div>
+                                    {expense.description && (
+                                        <p className="mt-1 mb-0 small">{expense.description}</p>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <Button
+                                        variant="outline-primary"
+                                        size="sm"
+                                        className="me-2"
+                                        onClick={() => handleEdit(expense)}
+                                    >
+                                      <FontAwesomeIcon icon={faPenToSquare} />
+                                    </Button>
+                                    <Button
+                                        variant="outline-danger"
+                                        size="sm"
+                                        onClick={() => handleRemove(expense.id)}
+                                    >
+                                      <FontAwesomeIcon icon={faTrashCan} />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </ListGroup.Item>
+                          ))
+                      ) : (
+                          <ListGroup.Item className="text-center py-4">
+                            No expense records found
+                          </ListGroup.Item>
+                      )}
+                    </ListGroup>
 
-
-<Button onClick={exportToExcel} className="mt-3 excel-button">
-          <FontAwesomeIcon icon={faFileExcel} className="icon-left" /> Export to Excel
-      </Button>
-                  {/* Pagination Controls */}
-            <div className="d-flex justify-content-between mt-3">
-            <Button  className="page" disabled={currentPage === 1}><FontAwesomeIcon icon={faArrowCircleLeft} /></Button>
-            <Button  className="page" disabled={currentPage * expensesPerPage >= expenses.length}><FontAwesomeIcon icon={faArrowCircleRight} /></Button>
-          </div>
-
-
-        </Col>
-      </Row>
-    </Container>
+                    {expensesData.length > expensesPerPage && (
+                        <div className="d-flex justify-content-center mt-3">
+                          <Button
+                              variant="outline-primary"
+                              className="me-2"
+                              onClick={handlePreviousPage}
+                              disabled={currentPage === 1}
+                          >
+                            <FontAwesomeIcon icon={faArrowCircleLeft} />
+                          </Button>
+                          <span className="mx-2 align-self-center">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                          <Button
+                              variant="outline-primary"
+                              onClick={handleNextPage}
+                              disabled={currentPage === totalPages}
+                          >
+                            <FontAwesomeIcon icon={faArrowCircleRight} />
+                          </Button>
+                        </div>
+                    )}
+                  </>
+              )}
+            </div>
+          </Col>
+        </Row>
+      </Container>
   );
 }
 

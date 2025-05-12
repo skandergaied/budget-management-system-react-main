@@ -1,47 +1,252 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Form, ListGroup, Container, Row, Col, Card, InputGroup, FormControl } from 'react-bootstrap';
-import SidebarNav from '../SidebarNav/SidebarNav';
-import BreadcrumbAndProfile from '../BreadcrumbAndProfile/BreadcrumbAndProfile';
+import { Chart as ChartJS } from 'chart.js/auto';
+import { Line } from 'react-chartjs-2';
 import * as XLSX from 'xlsx';
-import './incomes.css';
-import 'chartjs-adapter-date-fns';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileExcel, faArrowCircleLeft, faPlusCircle, faPenToSquare, faTrashCan } from '@fortawesome/free-solid-svg-icons';
+import {
+  faFileExcel,
+  faArrowCircleLeft,
+  faPlusCircle,
+  faPenToSquare,
+  faTrashCan,
+  faArrowCircleRight
+} from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'framer-motion';
-import { fetchData } from '../utils/api';
 import axios from "axios";
 import Cookies from 'js-cookie';
-import { useNavigate} from 'react-router-dom';
-import Table from 'react-bootstrap/Table';
+import { useNavigate } from 'react-router-dom';
+import SidebarNav from '../SidebarNav/SidebarNav';
+import BreadcrumbAndProfile from '../BreadcrumbAndProfile/BreadcrumbAndProfile';
+import PredictionPanel from '../Panel/PredictionPanel';
+import './incomes.css';
+import 'chartjs-adapter-date-fns';
 
 function Incomes() {
-
-  const [Username1, setUsername] = useState('');
+  const [username, setUsername] = useState('');
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
   const [description, setDescription] = useState('');
-  const [isPaid, setIsPaid] = useState(false);
+  const [category, setCategory] = useState('');
   const [editing, setEditing] = useState(false);
   const [currentIncome, setCurrentIncome] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [incomesPerPage] = useState(5);
-  const [category, setCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const navigate = useNavigate();
   const [incomesData, setIncomesData] = useState([]);
-  const categories = ['Salary', 'Freelance', 'Investment', 'Other'];
-  
-  
-  
-  //localStorage.setItem('incomes', JSON.stringify(totalAmount));
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+  const categories = ['Salary', 'Freelance', 'Investment', 'Additional Income', 'Passive Income', 'Other'];
+
   useEffect(() => {
-    const storedName = localStorage.getItem('username');
-    if (storedName) {
-      const parsedName = JSON.parse(storedName);
-      setUsername(parsedName.firstName); 
+    const fetchUserData = () => {
+      const storedName = localStorage.getItem('username');
+      if (storedName) {
+        try {
+          const parsedName = JSON.parse(storedName);
+          setUsername(parsedName.firstName || '');
+        } catch (e) {
+          console.error("Error parsing username:", e);
+        }
+      }
+    };
+
+    const fetchIncomes = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const token = Cookies.get('token');
+        if (!token) {
+          navigate('/login');
+          return;
+        }
+
+        const response = await axios.get(
+            "http://localhost:8095/api/v1/income/my-incomes",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+        );
+        setIncomesData(response.data);
+      } catch (error) {
+        console.error("Error fetching incomes:", error);
+        setError(error.response?.data?.message || "Failed to fetch incomes");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+    fetchIncomes();
+  }, [navigate]);
+
+  const totalAmount = incomesData.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
+
+  const chartData = {
+    labels: incomesData.map(income => new Date(income.date)),
+    datasets: [
+      {
+        label: 'Income Trend',
+        data: incomesData.map(income => parseFloat(income.amount)),
+        fill: false,
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        borderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 2,
+        tension: 0.1
+      }
+    ]
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        type: 'time',
+        time: {
+          unit: 'day',
+          tooltipFormat: 'MMM d, yyyy',
+          displayFormats: {
+            day: 'MMM d'
+          }
+        },
+        title: {
+          display: true,
+          text: 'Date'
+        }
+      },
+      y: {
+        title: {
+          display: true,
+          text: 'Amount (€)'
+        },
+        ticks: {
+          callback: function(value) {
+            return '€' + value;
+          }
+        },
+        suggestedMin: 0
+      }
+    },
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return `${context.dataset.label}: €${context.parsed.y}`;
+          }
+        }
+      }
     }
-  }, [incomesData]);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!name || !amount || !date || !category) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    const isConfirmed = window.confirm(
+        editing
+            ? "Are you sure you want to update this income?"
+            : "Are you sure you want to add this income?"
+    );
+    if (!isConfirmed) return;
+
+    const incomeData = {
+      name,
+      amount: parseFloat(amount),
+      date,
+      description,
+      category
+    };
+
+    const token = Cookies.get('token');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      let response;
+      if (editing) {
+        response = await axios.put(
+            `http://localhost:8095/api/v1/income/update/${currentIncome.id}`,
+            incomeData,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+        );
+        setIncomesData(incomesData.map(item =>
+            item.id === currentIncome.id ? response.data : item
+        ));
+      } else {
+        response = await axios.post(
+            "http://localhost:8095/api/v1/income/create",
+            incomeData,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+        );
+        setIncomesData([...incomesData, response.data]);
+      }
+      resetForm();
+    } catch (error) {
+      console.error('Error:', error);
+      alert(error.response?.data?.message || "An error occurred");
+    }
+  };
+
+  const handleEdit = (income) => {
+    setEditing(true);
+    setCurrentIncome(income);
+    setName(income.name);
+    setAmount(income.amount);
+    setDate(income.date);
+    setDescription(income.description || '');
+    setCategory(income.category);
+  };
+
+  const handleRemove = async (id) => {
+    const isConfirmed = window.confirm("Are you sure you want to delete this income?");
+    if (!isConfirmed) return;
+
+    const token = Cookies.get('token');
+    try {
+      await axios.delete(
+          `http://localhost:8095/api/v1/income/DeleteIncome/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+      );
+      setIncomesData(incomesData.filter(item => item.id !== id));
+    } catch (error) {
+      console.error('Error:', error);
+      alert(error.response?.data?.message || "Failed to delete income");
+    }
+  };
+
+  const resetForm = () => {
+    setName('');
+    setAmount('');
+    setDate('');
+    setDescription('');
+    setCategory('');
+    setEditing(false);
+    setCurrentIncome(null);
+  };
 
   const exportToExcel = () => {
     const ws = XLSX.utils.json_to_sheet(incomesData);
@@ -50,355 +255,274 @@ function Incomes() {
     XLSX.writeFile(wb, "Incomes.xlsx");
   };
 
-  //new
-  useEffect(() => {
-    const fetchIncomes = async () => {
-      try {
-        const response = await fetchData("http://localhost:8095/api/v1/income/my-incomes");
-        setIncomesData(response);
-
-
-      } catch (error) {
-        console.error("Error fetching incomes:", error.response?.data || error.message);
-      }
-    };
-    fetchIncomes(); 
-  }, []);
-   
-  const totalAmount = incomesData.reduce((sum, item) => sum + parseFloat(item.amount), 0);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (editing) {
-      const isConfirmed = window.confirm("Are you sure you want to update this income?");
-      if (!isConfirmed) {
-        return;
-      }
-      const updatedIncome = {
-        id: currentIncome.id,
-        name,
-        amount,
-        date,
-        description,
-        category,
-      };
-      const token = Cookies.get('token');
-      try {
-        const response = await axios.put(
-          `http://localhost:8095/api/v1/income/update/${currentIncome.id}`,
-          updatedIncome,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        console.log('Success:', response.data);
-        setIncomesData(incomesData.map(income => 
-          income.id === currentIncome.id ? { ...income, ...response.data } : income
-        ));
-      } catch (error) {
-        console.error('Error:', error.response ? error.response.data : error.message);
-      }
-      resetForm();
-     // setEditing(false);
-    } else {
-      
-      
-    if (!name || !amount || !date || !description || !category) {
-      alert("All fields are required, including the category.");
-      return;
-    }
-    const isConfirmed = window.confirm(editing ? "Are you sure you want to update this income?" : "Are you sure you want to add this income?");
-    if (!isConfirmed) {
-      return;
-    }
-    const incomeData = {
-    //  id: editing ? currentIncome.id : Date.now(),
-      name,
-      amount,
-      date,
-      description,
-     // status: isPaid ? "PAID" : "DUE",
-      category,
-    };
-    const token = Cookies.get('token');
-     
-     const list = await axios.get(
-          "http://localhost:8095/api/v1/income/my-incomes",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-         
-        );
-        setIncomesData(list.data);
-
-       try {
-            const response = await axios.post(
-              "http://localhost:8095/api/v1/income/create",
-              incomeData,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            );    
-            setIncomesData([...incomesData, response.data]);
-            
-          } catch (error) {
-            console.error('Error while sending expense data:', error);
-          }
-
-
-
-    resetForm();
-  };
-}
-
-  const resetForm = () => {
-    setName('');
-    setAmount('');
-    setDate('');
-    setDescription('');
-    setIsPaid(false);
-    setEditing(false);
-    setCurrentIncome(null);
-    setCategory('');
-  };
-
-
-
+  // Pagination logic
   const indexOfLastIncome = currentPage * incomesPerPage;
   const indexOfFirstIncome = indexOfLastIncome - incomesPerPage;
- // const currentIncomes = filteredIncomes.slice(indexOfFirstIncome, indexOfLastIncome);
+  const currentIncomes = incomesData.slice(indexOfFirstIncome, indexOfLastIncome);
+  const totalPages = Math.ceil(incomesData.length / incomesPerPage);
 
-  // Change page function
   const handlePreviousPage = () => {
-    setCurrentPage(prev => prev > 1 ? prev - 1 : prev);
+    setCurrentPage(prev => Math.max(prev - 1, 1));
   };
 
   const handleNextPage = () => {
-  //  setCurrentPage(prev => prev * incomesPerPage < filteredIncomes.length ? prev + 1 : prev);
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
   };
 
-
-  
-  const handleRemove = async (id) => {
-    const isConfirmed = window.confirm("Are you sure you want to remove this expense?");
-    const token = Cookies.get('token');
-     
-    try {
-      const response = await axios.delete(`http://localhost:8095/api/v1/income/DeleteIncome/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        }
-      });
-      console.log('Success:', response.data);
-    } catch (error) {
-      console.error('Error:', error.response ? error.response.data : error.message);
-    }
-     
-    if (isConfirmed) {
-      setIncomesData(incomesData.filter(expense => expense.id !== id));
-    }
-  };
-
-  
-
-  const handleEdit = async (income) => {
-    setCurrentIncome(income);
-    setName(income.name);
-    setAmount(income.amount);
-    setDate(income.date);
-    setDescription(income.description);
-    setIsPaid(income.status === "PAID");
-    setCategory(income.category);
-    setEditing(true);
-
-  }
-  const chartOptions = {
-    scales: {
-      x: {
-        type: 'time',
-        time: {
-          unit: 'day',
-        },
-        title: {
-          display: true,
-          text: 'Date',
-        },
-      },
-      y: {
-        title: {
-          display: true,
-          text: 'Income (€)',
-        },
-      },
-    },
-  };
-
-  
-  return (
-    <Container fluid>
-      <Row>
-        <Col md={2} className="sidebar">
-          <SidebarNav />
-        </Col>
-        <Col md={10} className="main">
-        <BreadcrumbAndProfile 
-           username={Username1} 
-          role="Freelancer React Developer" 
-          pageTitle="Incomes"
-          breadcrumbItems={[
-          { name: 'Dashboard', path: '/dashboard', active: false },
-          { name: 'Incomes', path: '/incomes', active: true }
-          ]}
-          />
-          <InputGroup className="mb-3">
-            <FormControl
-               placeholder="Search by date, name, or category..."
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </InputGroup>
-
-
-          <Row>
-
-          {searchQuery.trim() !== '' && (
-    <Table className="circular-corners"  striped bordered hover responsive isHovered >
-      <thead>
-        <tr >
-          <th >Name</th>
-          <th >Description</th>
-          <th>Amount</th>
-          <th>Date</th>
-          <th>Category</th>
-        </tr>
-      </thead>
-      <tbody>
-        {incomesData
-          .filter((item) => item.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  const filteredIncomes = searchQuery
+      ? incomesData.filter(item =>
           item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           item.amount.toString().includes(searchQuery) ||
-          item.category.toLowerCase().includes(searchQuery.toLowerCase()))
-          .map((item, index) => (
-            <tr key={index}>
-              <td>{item.name}</td>
-              <td>{item.description}</td>
-              <td>{item.amount} €</td>
-              <td>{item.date}</td>
-              <td>{item.category}</td>
-            </tr>
-          ))}
-      </tbody>
-    </Table>
-)}
-          <Col md={6}>
-  <motion.div
-    initial={{ opacity: 0, y: 20 }} // Initial state: transparent and slightly below its final position
-    animate={{ opacity: 1, y: 0 }} // Animate to: fully opaque and in its final position
-    transition={{ duration: 0.5, delay: 0.2 }} // Customize the duration and add a delay if desired
-  >
-    <Card className="mt-3 total">
-      <Card.Body>
-        <Card.Title>Total Income</Card.Title>
-        <Card.Text>
-         {totalAmount} €
-        </Card.Text>
-      </Card.Body>
-    </Card>
-  </motion.div>
-</Col>
+          item.date.includes(searchQuery) ||
+          item.category.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      : incomesData;
 
-    <Col md={6}>
-    <div className="chart-container">
-      
-    </div>
-  </Col>
-</Row>
+  return (
+      <Container fluid>
+        <Row>
+          <Col md={2} className="sidebar">
+            <SidebarNav />
+          </Col>
+          <Col md={10} className="main">
+            <BreadcrumbAndProfile
+                username={username}
+                role="User"
+                pageTitle="Incomes"
+                breadcrumbItems={[
+                  { name: 'Dashboard', path: '/dashboard', active: false },
+                  { name: 'Incomes', path: '/incomes', active: true }
+                ]}
+            />
 
-<Form onSubmit={handleSubmit}>
-  <Row className="grid-row">
-    <Col md={4}>
-      <Form.Group>
-        <Form.Label>Name</Form.Label>
-        <Form.Control type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Income Name" required />
-      </Form.Group>
-    </Col>
-    <Col md={4}>
-      <Form.Group>
-        <Form.Label>Description</Form.Label>
-        <Form.Control type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Short description" required />
-      </Form.Group>
-    </Col>
-    <Col md={4}>
-      <Form.Group>
-        <Form.Label>Amount</Form.Label>
-        <Form.Control type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Income Amount in Euros" required />
-      </Form.Group>
-    </Col>
-  </Row>
-  <Row className="grid-row">
-    <Col md={4}>
-      <Form.Group>
-        <Form.Label>Date</Form.Label>
-        <Form.Control type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
-      </Form.Group>
-    </Col>
-    <Col md={4}>
-      <Form.Group>
-        <Form.Label>Category</Form.Label>
-        <Form.Select value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option value="">Select a category</option>
-          {categories.map((cat, index) => (
-            <option key={index} value={cat}>{cat}</option>
-          ))}
-        </Form.Select>
-      </Form.Group>
-    </Col>
-    <Col md={4} className="d-flex align-items-center">
-      <Form.Group>
-        <Form.Check type="checkbox" label="Paid" checked={isPaid} onChange={(e) => setIsPaid(e.target.checked)} />
-      </Form.Group>
-    </Col>
-  </Row>
-  <Button type="submit" className="mt-3 primary-button">{editing ? "Update Income" : "Add Income"}<FontAwesomeIcon icon={faPlusCircle} className="icon-right"/></Button>
-</Form>
+            {error && (
+                <div className="alert alert-danger">
+                  {error}
+                </div>
+            )}
 
+            <InputGroup className="mb-3">
+              <FormControl
+                  placeholder="Search incomes..."
+                  onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </InputGroup>
 
-<ListGroup className="mt-3">
-  {incomesData.map((IncomesData) => (
-    <ListGroup.Item key={IncomesData.id} className="list-group-item">
-      <div className="expense-details">
-        {` ${IncomesData.id}-Name: ${IncomesData.name} - Amount: €${IncomesData.amount} - Date: ${IncomesData.date} - Type: ${IncomesData.description} - Category: ${IncomesData.category || 'Not specified'} - Status: ${IncomesData.status}`}
-      </div>
-      <div className="button-group">
-        <Button className="edit" size="sm" onClick={() => handleEdit(IncomesData)} style={{backgroundColor:'#004883', color: 'white', marginRight: '5px' }}>
-          <FontAwesomeIcon icon={faPenToSquare} className="icon-left"/>Edit
-        </Button>
-        <Button variant="danger" size="sm"  onClick={() => handleRemove(IncomesData.id)} style={{backgroundColor:'#ff4d4d', color: 'white'}}>
-          <FontAwesomeIcon icon={faTrashCan} className="icon-left"/>Remove
-        </Button>
-      </div>
-    </ListGroup.Item>
-  ))}
-</ListGroup>
+            <Row>
+              <Col md={6}>
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                >
+                  <Card className="mt-3 total">
+                    <Card.Body>
+                      <Card.Title>Total Income</Card.Title>
+                      <Card.Text className="display-6">
+                        €{totalAmount.toFixed(2)}
+                      </Card.Text>
+                    </Card.Body>
+                  </Card>
+                </motion.div>
+              </Col>
+              <Col md={6}>
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                >
+                  <Card className="mt-3">
+                    <Card.Body>
+                      <Card.Title>Income Trends</Card.Title>
+                      <div style={{ height: '250px' }}>
+                        <Line data={chartData} options={chartOptions} />
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </motion.div>
+              </Col>
+            </Row>
 
-        <Button onClick={exportToExcel} className="mt-3 excel-button">
-          <FontAwesomeIcon icon={faFileExcel} className="icon-left" /> Export to Excel
-      </Button>
+            <Form onSubmit={handleSubmit} className="mt-4">
+              <Row className="mb-3">
+                <Col md={4}>
+                  <Form.Group controlId="formName">
+                    <Form.Label>Name*</Form.Label>
+                    <Form.Control
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Income source"
+                        required
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group controlId="formAmount">
+                    <Form.Label>Amount (€)*</Form.Label>
+                    <Form.Control
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="0.00"
+                        required
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group controlId="formDate">
+                    <Form.Label>Date*</Form.Label>
+                    <Form.Control
+                        type="date"
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        required
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Row className="mb-3">
+                <Col md={6}>
+                  <Form.Group controlId="formDescription">
+                    <Form.Label>Description</Form.Label>
+                    <Form.Control
+                        as="textarea"
+                        rows={2}
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="Additional details"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group controlId="formCategory">
+                    <Form.Label>Category*</Form.Label>
+                    <Form.Select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        required
+                    >
+                      <option value="">Select category</option>
+                      {categories.map((cat, index) => (
+                          <option key={index} value={cat}>{cat}</option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Button
+                  variant="primary"
+                  type="submit"
+                  className="me-2"
+              >
+                <FontAwesomeIcon icon={editing ? faPenToSquare : faPlusCircle} className="me-2" />
+                {editing ? 'Update Income' : 'Add Income'}
+              </Button>
+              {editing && (
+                  <Button
+                      variant="secondary"
+                      onClick={resetForm}
+                  >
+                    Cancel
+                  </Button>
+              )}
+            </Form>
 
-                    {/* Pagination Controls */}
-            <div className="d-flex justify-content-between mt-3">
-            <Button onClick={handlePreviousPage} className="page" disabled={currentPage === 1}><FontAwesomeIcon icon={faArrowCircleLeft} /></Button>
-           
-          </div>
-        </Col>
-      </Row>
-    </Container>
+            <div className="mt-4">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5>Income Records</h5>
+                <Button onClick={exportToExcel} variant="success">
+                  <FontAwesomeIcon icon={faFileExcel} className="me-2" />
+                  Export to Excel
+                </Button>
+              </div>
+
+              {loading ? (
+                  <div className="text-center py-4">
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  </div>
+              ) : (
+                  <>
+                    <ListGroup>
+                      {filteredIncomes.length > 0 ? (
+                          filteredIncomes.slice(indexOfFirstIncome, indexOfLastIncome).map((income) => (
+                              <ListGroup.Item key={income.id} className="mb-2">
+                                <div className="d-flex justify-content-between align-items-center">
+                                  <div>
+                                    <h6>{income.name}</h6>
+                                    <div className="text-muted small">
+                                      <span className="me-3">€{parseFloat(income.amount).toFixed(2)}</span>
+                                      <span className="me-3">{income.date}</span>
+                                      <span className="badge bg-info">{income.category}</span>
+                                    </div>
+                                    {income.description && (
+                                        <p className="mt-1 mb-0 small">{income.description}</p>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <Button
+                                        variant="outline-primary"
+                                        size="sm"
+                                        className="me-2"
+                                        onClick={() => handleEdit(income)}
+                                    >
+                                      <FontAwesomeIcon icon={faPenToSquare} />
+                                    </Button>
+                                    <Button
+                                        variant="outline-danger"
+                                        size="sm"
+                                        onClick={() => handleRemove(income.id)}
+                                    >
+                                      <FontAwesomeIcon icon={faTrashCan} />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </ListGroup.Item>
+                          ))
+                      ) : (
+                          <ListGroup.Item className="text-center py-4">
+                            No income records found
+                          </ListGroup.Item>
+                      )}
+                    </ListGroup>
+
+                    {incomesData.length > incomesPerPage && (
+                        <div className="d-flex justify-content-center mt-3">
+                          <Button
+                              variant="outline-primary"
+                              className="me-2"
+                              onClick={handlePreviousPage}
+                              disabled={currentPage === 1}
+                          >
+                            <FontAwesomeIcon icon={faArrowCircleLeft} />
+                          </Button>
+                          <span className="mx-2 align-self-center">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                          <Button
+                              variant="outline-primary"
+                              onClick={handleNextPage}
+                              disabled={currentPage === totalPages}
+                          >
+                            <FontAwesomeIcon icon={faArrowCircleRight} />
+                          </Button>
+                        </div>
+                    )}
+                  </>
+              )}
+            </div>
+
+            <div className="mt-5">
+              <PredictionPanel />
+            </div>
+          </Col>
+        </Row>
+      </Container>
   );
 }
 

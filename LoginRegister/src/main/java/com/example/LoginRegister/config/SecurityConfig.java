@@ -37,7 +37,7 @@ import java.util.Arrays;
                         .csrf(csrf -> csrf.disable()) 
                         .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/expense/**","/api/v1/income/**").authenticated() 
+                        .requestMatchers("/api/v1/expense/**","/api/v1/income/**").authenticated()
                         .anyRequest().authenticated())         
                          .sessionManagement(session -> session  .sessionCreationPolicy(SessionCreationPolicy.STATELESS)  )     
                         .authenticationProvider(authenticationProvider) 
