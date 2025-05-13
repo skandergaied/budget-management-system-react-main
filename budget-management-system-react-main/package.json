@@ -8,6 +8,7 @@
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.5.1",
     "@fortawesome/react-fontawesome": "^0.2.0",
+    "@lottiefiles/dotlottie-react": "^0.13.5",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -19,6 +20,7 @@
     "framer-motion": "^11.0.5",
     "https-browserify": "^1.0.0",
     "js-cookie": "^3.0.5",
+    "lottie-react": "^2.4.1",
     "react": "^18.2.0",
     "react-bootstrap": "^2.10.0",
     "react-chartjs-2": "^5.2.0",
@@ -31,6 +33,7 @@
     "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5"
   },
+  
   
   "scripts": {
     "start": "cross-env NODE_OPTIONS=\"--openssl-legacy-provider --max-old-space-size=4096\" react-scripts start",

@@ -1,0 +1,293 @@
+/* HomePage.css - Enhanced Professional Version with Lottie */
+
+:root {
+    --pro-primary-blue: #0052CC;
+    --pro-primary-blue-darker: #0041A3;
+    --pro-primary-light: #E6F0FF; /* Light variant for accents */
+    --pro-secondary-bg: #F4F5F7;
+    --pro-secondary-bg-hover: #EBECF0;
+    --pro-secondary-text: #42526E;
+    --pro-secondary-border-hover: #DFE1E6;
+    --pro-text-headings: #172B4D;
+    --pro-text-body: #42526E;
+    --pro-text-muted: #6B778C;
+    --pro-page-bg: #FFFFFF;
+    --pro-content-box-bg: #FFFFFF;
+    --pro-border-color: #DFE1E6;
+    --pro-focus-ring: rgba(0, 82, 204, 0.3);
+    --pro-success-green: #36B37E; /* For positive metrics or success states */
+  }
+
+  /* Base layout styling */
+  .homepage-wrapper-pro {
+    background-color: var(--pro-page-bg);
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+    padding: 3rem 1rem;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .homepage-container-pro {
+    max-width: 1280px; /* Slightly wider container */
+    width: 100%;
+  }
+
+  /* Content layout */
+  .text-content-col-pro {
+    text-align: center;
+  }
+
+  .content-box-pro {
+    background-color: var(--pro-content-box-bg);
+    padding: 2.5rem;
+    color: var(--pro-text-body);
+  }
+
+  @media (min-width: 768px) {
+    .text-content-col-pro {
+      text-align: left;
+    }
+    .content-box-pro {
+      padding: 0;
+    }
+  }
+
+  /* Brand and typography */
+  .brand-container-pro {
+    display: inline-block;
+    margin-bottom: 1.75rem;
+  }
+
+  .brand-icon-pro {
+    color: var(--pro-primary-blue);
+    filter: drop-shadow(0 2px 4px rgba(0, 82, 204, 0.2));
+  }
+
+  .hero-title-pro {
+    font-size: 2.875rem;
+    font-weight: 700;
+    color: var(--pro-text-headings);
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    margin-bottom: 1.25rem;
+  }
+
+  .highlight-text-pro {
+    color: var(--pro-primary-blue);
+    position: relative;
+  }
+
+  .highlight-text-pro::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: var(--pro-primary-light);
+    border-radius: 3px;
+  }
+
+  .hero-lead-pro {
+    font-size: 1.25rem;
+    color: var(--pro-text-body);
+    line-height: 1.65;
+    max-width: 540px;
+    margin-bottom: 1.75rem;
+  }
+
+  /* Benefits section */
+  .benefits-container-pro {
+    margin-bottom: 2rem;
+  }
+
+  .benefit-icon-pro {
+    color: var(--pro-primary-blue);
+    margin-right: 0.75rem;
+  }
+
+  .benefit-text-pro {
+    color: var(--pro-text-body);
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  /* Stats counter */
+  .stats-counter-pro {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--pro-border-color);
+  }
+
+  .stat-number-pro {
+    font-weight: 700;
+    font-size: 1.75rem;
+    color: var(--pro-text-headings);
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-label-pro {
+    font-size: 0.875rem;
+    color: var(--pro-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Button styles */
+  .btn-primary-pro,
+  .btn-secondary-pro {
+    padding: 0.875rem 1.75rem;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: all 0.2s ease-in-out;
+    border: 1px solid transparent;
+    line-height: 1.5;
+    letter-spacing: 0.2px;
+  }
+
+  .btn-primary-pro:focus-visible,
+  .btn-secondary-pro:focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px var(--pro-focus-ring);
+  }
+
+  .btn-primary-pro {
+    background-color: var(--pro-primary-blue);
+    border-color: var(--pro-primary-blue);
+    color: white;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 2px 4px rgba(0,82,204,0.1);
+  }
+
+  .btn-primary-pro:hover {
+    background-color: var(--pro-primary-blue-darker);
+    border-color: var(--pro-primary-blue-darker);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.07), 0 4px 8px rgba(0,82,204,0.15);
+  }
+
+  .btn-secondary-pro {
+    background-color: var(--pro-secondary-bg);
+    border-color: var(--pro-secondary-bg);
+    color: var(--pro-secondary-text);
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .btn-secondary-pro:hover,
+  .btn-secondary-pro.btn-hover {
+    background-color: var(--pro-secondary-bg-hover);
+    border-color: var(--pro-secondary-border-hover);
+    color: var(--pro-text-headings);
+    transform: translateY(-1px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+
+  .tagline-muted-pro {
+    font-size: 0.875rem;
+    color: var(--pro-text-muted);
+    margin-top: 2.5rem;
+    font-style: italic;
+  }
+
+  /* Lottie Animation Styling */
+  .lottie-container-pro { /* Container for the Lottie animation */
+    width: 100%;
+    max-width: 500px; /* Adjust to best fit your Lottie animation */
+    /* Aspect ratio can be controlled here or by the Lottie file itself */
+  }
+
+  .homepage-lottie-animation { /* The Lottie player itself */
+    width: 100%;
+    height: auto; /* Allow Lottie to maintain its aspect ratio */
+    /* Add any specific margins or padding if needed for the Lottie player */
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 991.98px) {
+    .text-content-col-pro, .image-col-pro { /* .image-col-pro is the Bootstrap Col */
+      margin-bottom: 3rem;
+    }
+    .lottie-container-pro:last-child, /* If Lottie container is last, remove margin */
+    .text-content-col-pro:last-child {
+      margin-bottom: 0;
+    }
+    .hero-title-pro {
+      font-size: 2.5rem;
+    }
+    .lottie-container-pro {
+        max-width: 450px;
+    }
+  }
+
+  @media (max-width: 767.98px) {
+    .homepage-wrapper-pro {
+      padding: 2.5rem 1rem;
+      align-items: flex-start;
+    }
+    .hero-title-pro {
+      font-size: 2.25rem;
+    }
+    .hero-lead-pro {
+      font-size: 1.125rem;
+      max-width: 100%;
+    }
+    .btn-primary-pro,
+    .btn-secondary-pro {
+      font-size: 0.95rem;
+      padding: 0.85rem 1.5rem;
+    }
+    .cta-buttons-row-pro .col-sm-6:first-child {
+      margin-bottom: 1rem;
+    }
+    .stats-counter-pro {
+      margin-top: 2rem;
+    }
+    .stat-number-pro {
+      font-size: 1.5rem;
+    }
+    .stat-label-pro {
+      font-size: 0.75rem;
+    }
+    /* The Lottie column (.image-col-pro) is hidden by d-none d-md-flex in JS for mobile */
+  }
+
+  /* Animation helper classes (if needed elsewhere, otherwise can be removed if only for old fade-in) */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .fade-in { /* This class is not currently used in the JS with framer-motion */
+    animation: fadeIn 0.6s ease forwards;
+  }
+
+  .typing-cursor {
+  display: inline-block; /* Needed for animation/layout */
+  width: 2px; /* Optional: make it a block cursor */
+  height: 1em; /* Match line height */
+  background-color: var(--pro-text-headings); /* Match heading color */
+  margin-left: 3px;
+  opacity: 1;
+  animation: blink 0.7s infinite;
+  vertical-align: text-bottom; /* Align with text baseline */
+}
+
+/* Blinking animation */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Ensure h1 has enough height even when empty initially */
+.hero-title-pro {
+  min-height: 1.2em; /* Prevent layout jump based on title line-height */
+  /* ... keep other h1 styles ... */
+}

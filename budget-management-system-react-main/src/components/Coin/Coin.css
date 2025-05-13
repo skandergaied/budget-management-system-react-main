@@ -1,66 +1,147 @@
-.coin-container {
-    display: flex;
-    justify-content: center;
-  }
-  
-  .coin-row {
-    display: flex;
-    flex-direction: row;
-    justify-content: start;
-    align-items: center;
-    height: 80px;
-    border-bottom: 1px solid #d7d7d7;
-    width: 900px;
-  }
-  
-  .coin {
-    display: flex;
-    align-items: center;
-    padding-right: 24px;
-  
-    min-width: 300px;
-  }
-  
-  .coin h1 {
-    font-size: 16px;
-    width: 150px;
-  }
-  
-  .coin img {
-    height: 30px;
-    width: 30px;
-    margin-right: 10px;
-  }
-  
-  .coin-symbol {
-    text-transform: uppercase;
-  }
-  
-  .coin-data {
-    display: flex;
-    text-align: right;
-    justify-content: space-between;
-    width: 60%;
-  }
-  
-  .coin-price {
-    width: 100px;
-  }
-  
- 
-  
-  .coin-marketcap {
-    width: 230px;
-  }
-  
-  .coin-percent {
-    width: 100px;
-  }
-  
-  .red {
-    color: #f00606;
-  }
-  
-  .green {
-    color: #11d811;
-  }
+/* CoinS.css */
+
+.coins-container {
+  background-color: #0d1a2f; /* Dark Blue (Color 1 - Base) */
+  padding: 15px;
+  border-radius: 12px;
+  color: #e0e0e0; /* Light Gray (Color 3 - Default Text) */
+  font-family: 'Arial', sans-serif; /* Consider 'Inter', 'Roboto', or system-ui for a more modern feel if project allows */
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.coins-header {
+  color: #00e0d6; /* Teal (Color 2 - Accent) */
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 18px; /* Increased slightly for better separation */
+  font-size: 1.15rem; /* Slightly larger header */
+  font-weight: 600; /* Adjusted weight */
+}
+
+.coins-list {
+  overflow-y: auto;
+  flex-grow: 1;
+  padding-right: 5px; /* Space for scrollbar, adjust if scrollbar width changes */
+}
+
+/* Scrollbar styling for webkit browsers */
+.coins-list::-webkit-scrollbar {
+  width: 7px; /* Slightly adjusted width */
+}
+
+.coins-list::-webkit-scrollbar-track {
+  background: #0d1a2f; /* Dark Blue (Color 1) */
+  border-radius: 10px;
+}
+
+.coins-list::-webkit-scrollbar-thumb {
+  background-color: #00e0d6; /* Teal (Color 2 - Accent) */
+  border-radius: 10px;
+  border: 1.5px solid #0d1a2f; /* Dark Blue (Color 1 - Creates a small gap effect) */
+}
+
+
+.coins-loading,
+.coins-error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  font-size: 0.9rem;
+  padding: 10px; /* Add some padding */
+  text-align: center; /* Ensure text is centered if it wraps */
+}
+
+.coins-error {
+  color: #a0b3d1; /* Muted Light Gray/Blue (Color 3 - Softer variant for non-critical errors) */
+  font-weight: 500;
+}
+
+
+/* Styling for Individual Coin Item (Coin.js) */
+.coin-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px; /* Adjusted padding */
+  margin-bottom: 8px; /* Adjusted margin */
+  background-color: #1a293f; /* Dark Blue Shade (Color 1 - Variant) */
+  border-radius: 10px; /* Slightly increased radius for a softer look */
+  border: 1px solid #00e0d633; /* Transparent Teal border (Color 2 - Accent with alpha) */
+  transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out, border-color 0.2s ease-in-out;
+  cursor: default;
+}
+
+.coin-item:hover {
+  background-color: #203554; /* Darker Blue Shade on hover (Color 1 - Variant) */
+  border-color: #00e0d680; /* More opaque Teal border on hover (Color 2 - Accent with more alpha) */
+  transform: translateY(-2px); /* Subtle lift effect */
+}
+
+.coin-item:last-child {
+  margin-bottom: 0;
+}
+
+.coin-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* Using gap for spacing */
+}
+
+.coin-image {
+  width: 30px; /* Adjusted size */
+  height: 30px; /* Adjusted size */
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: #ffffff1a; /* Transparent White (Color 3 - Variant for image placeholder/bg) */
+  border: 1px solid #00e0d640; /* Subtle teal border around image */
+}
+
+.coin-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.coin-symbol {
+  font-size: 0.95rem; /* Slightly increased */
+  font-weight: bold;
+  color: #ffffff; /* White (Color 3 - Brightest variant) */
+  line-height: 1.2;
+}
+
+.coin-name {
+  font-size: 0.7rem; /* Slightly smaller for better hierarchy */
+  color: #a0b3d1; /* Muted Light Gray/Blue (Color 3 - Softer variant) */
+  line-height: 1.3; /* Adjusted line height */
+}
+
+.coin-market-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.coin-price {
+  font-size: 0.95rem; /* Matched with symbol size */
+  font-weight: 600;
+  color: #ffffff; /* White (Color 3 - Brightest variant) */
+  margin-bottom: 4px; /* Adjusted space */
+}
+
+.coin-price-change {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.positive-change {
+  color: #00e0d6; /* Teal (Color 2 - Accent) */
+}
+
+.negative-change {
+  color: #a0b3d1; /* Muted Light Gray/Blue (Color 3 - Softer variant for negative, as requested) */
+}

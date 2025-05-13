@@ -37,6 +37,7 @@ public class User implements UserDetails{
     @Column(nullable = false, unique = true)
     @Size(max = 100)
     private String email;
+    
 
     @Column(nullable = false)
     @Size(max = 100)

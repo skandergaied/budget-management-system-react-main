@@ -1,0 +1,138 @@
+/* src/components/Expenses/expenses.css (or your preferred path) */
+.main-content-area { /* Used in Expenses.js */
+    padding: 1.5rem;
+    background-color: #f8f9fa; /* Light background for content area */
+  }
+  
+  .app-table { /* General table styling */
+      margin-top: 1rem;
+      border-radius: 0.3rem;
+      overflow: hidden; /* For rounded corners on table */
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+  .app-table th {
+      background-color: #e9ecef; /* Light header for table */
+      color: #495057;
+  }
+  
+  .excel-button {
+    background-color: #1D6F42; /* Excel green */
+    color: white;
+    border: none;
+  }
+  .excel-button:hover {
+    background-color: #15502F;
+  }
+  .icon-left {
+    margin-right: 8px;
+  }
+  .icon-right {
+    margin-left: 8px;
+  }
+  
+  .total-summary-card {
+    background-color: #e9f5ff; /* Light blue */
+    border-left: 5px solid #0d6efd; /* Bootstrap primary blue */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+  .total-summary-card .card-title {
+    color: #0a58ca; /* Darker blue */
+    font-weight: 500;
+  }
+  .total-amount-text {
+    font-size: 1.75rem;
+    font-weight: bold;
+    color: #343a40; /* Dark gray for amount */
+  }
+  
+  .app-form {
+      background-color: #ffffff;
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .app-form .form-group label {
+      font-weight: 500;
+      color: #495057;
+  }
+  
+  .primary-action-button {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+    transition: background-color 0.2s ease-in-out;
+  }
+  .primary-action-button:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+  }
+  
+  .data-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem 1rem;
+    border-radius: .3rem;
+    margin-bottom: 0.5rem;
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    transition: box-shadow 0.2s ease;
+  }
+  .data-list-item:hover {
+      box-shadow: 0 3px 7px rgba(0,0,0,0.1);
+  }
+  
+  .item-details {
+    flex-grow: 1;
+    margin-right: 1rem;
+    color: #495057;
+  }
+  .item-details strong {
+      color: #212529;
+  }
+  .item-details small {
+      color: #6c757d;
+      display: block; /* Makes sure it takes its own line */
+      margin-top: 0.2rem;
+  }
+  
+  .item-actions .btn {
+    padding: 0.25rem 0.5rem; /* Smaller buttons */
+    font-size: 0.8rem;
+  }
+  .edit-button {
+    background-color: #6c757d; /* Bootstrap secondary */
+    color: white;
+    border: none;
+  }
+  .edit-button:hover {
+    background-color: #5a6268;
+  }
+  .remove-button {
+      background-color: #dc3545; /* Bootstrap danger */
+      color: white;
+      border: none;
+  }
+  .remove-button:hover {
+      background-color: #bb2d3b;
+  }
+  
+  .pagination-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+  }
+  .pagination-button {
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+  }
+  .pagination-button:hover {
+    background-color: #0b5ed7;
+  }
+  .pagination-button:disabled {
+    background-color: #6c757d;
+    opacity: 0.65;
+  }

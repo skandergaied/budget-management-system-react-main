@@ -1,399 +1,363 @@
-import React, { useState, useEffect } from 'react';
-import { Button, Form, ListGroup, Container, Row, Col, Card, InputGroup, FormControl } from 'react-bootstrap';
+// src/components/Incomes/Incomes.js
+import React, { useState, useEffect, useMemo } from 'react';
+import { Button, Form, ListGroup, Container, Row, Col, Card, InputGroup, FormControl, Table } from 'react-bootstrap';
 import SidebarNav from '../SidebarNav/SidebarNav';
 import BreadcrumbAndProfile from '../BreadcrumbAndProfile/BreadcrumbAndProfile';
 import * as XLSX from 'xlsx';
-import './incomes.css';
+import './incomes.css'; // Make sure this CSS file exists and has the shared styles
 import 'chartjs-adapter-date-fns';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileExcel, faArrowCircleLeft, faPlusCircle, faPenToSquare, faTrashCan } from '@fortawesome/free-solid-svg-icons';
+import { faFileExcel, faPlusCircle, faPenToSquare, faTrashCan, faArrowCircleLeft, faArrowCircleRight } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'framer-motion';
 import { fetchData } from '../utils/api';
 import axios from "axios";
 import Cookies from 'js-cookie';
-import { useNavigate} from 'react-router-dom';
-import Table from 'react-bootstrap/Table';
+// import { useNavigate } from 'react-router-dom'; // useNavigate is imported but not used. Remove if not needed.
 
 function Incomes() {
-
   const [Username1, setUsername] = useState('');
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [description, setDescription] = useState('');
-  const [isPaid, setIsPaid] = useState(false);
+  // const [isPaid, setIsPaid] = useState(false); // Retained if status is still part of your model - currently commented out in JSX
   const [editing, setEditing] = useState(false);
   const [currentIncome, setCurrentIncome] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [incomesPerPage] = useState(5);
   const [category, setCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const navigate = useNavigate();
-  const [incomesData, setIncomesData] = useState([]);
+  // const navigate = useNavigate(); // Imported but not used.
+  const [allIncomesData, setAllIncomesData] = useState([]);
   const categories = ['Salary', 'Freelance', 'Investment', 'Other'];
-  
-  
-  
-  //localStorage.setItem('incomes', JSON.stringify(totalAmount));
+
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+
   useEffect(() => {
     const storedName = localStorage.getItem('username');
     if (storedName) {
       const parsedName = JSON.parse(storedName);
-      setUsername(parsedName.firstName); 
+      setUsername(parsedName.firstName || 'User');
     }
-  }, [incomesData]);
+  }, []);
 
-  const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(incomesData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Incomes");
-    XLSX.writeFile(wb, "Incomes.xlsx");
-  };
-
-  //new
   useEffect(() => {
     const fetchIncomes = async () => {
       try {
         const response = await fetchData("http://localhost:8095/api/v1/income/my-incomes");
-        setIncomesData(response); 
+        setAllIncomesData(Array.isArray(response) ? response : []);
       } catch (error) {
         console.error("Error fetching incomes:", error.response?.data || error.message);
+        setAllIncomesData([]);
       }
     };
-    fetchIncomes(); 
+    fetchIncomes();
   }, []);
-   
-  const totalAmount = incomesData.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+
+  const filteredIncomes = useMemo(() => {
+    let incomes = [...allIncomesData];
+
+    if (selectedMonth) {
+      incomes = incomes.filter(income => income.date && income.date.startsWith(selectedMonth));
+    }
+
+    if (searchQuery.trim() !== '') {
+      const lowerSearchQuery = searchQuery.toLowerCase();
+      incomes = incomes.filter(item =>
+        (item.name && item.name.toLowerCase().includes(lowerSearchQuery)) ||
+        (item.description && item.description.toLowerCase().includes(lowerSearchQuery)) ||
+        (item.amount && item.amount.toString().includes(searchQuery)) ||
+        (item.date && item.date.toLowerCase().includes(lowerSearchQuery)) ||
+        (item.category && item.category.toLowerCase().includes(lowerSearchQuery))
+      );
+    }
+    return incomes.sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [allIncomesData, selectedMonth, searchQuery]);
+
+  const totalMonthlyAmount = useMemo(() => {
+    const monthlyData = allIncomesData.filter(income => income.date && income.date.startsWith(selectedMonth));
+    return monthlyData.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
+  }, [allIncomesData, selectedMonth]);
+
+  const indexOfLastIncome = currentPage * incomesPerPage;
+  const indexOfFirstIncome = indexOfLastIncome - incomesPerPage;
+  const currentIncomes = filteredIncomes.slice(indexOfFirstIncome, indexOfLastIncome);
+  const totalPages = Math.ceil(filteredIncomes.length / incomesPerPage);
+
+  const exportToExcel = () => {
+    const ws = XLSX.utils.json_to_sheet(currentIncomes);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Incomes");
+    XLSX.writeFile(wb, `Incomes_${selectedMonth || 'all_time'}.xlsx`);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editing) {
-      const isConfirmed = window.confirm("Are you sure you want to update this income?");
-      if (!isConfirmed) {
-        return;
-      }
-      const updatedIncome = {
-        id: currentIncome.id,
-        name,
-        amount,
-        date,
-        description,
-        category,
-      };
-      const token = Cookies.get('token');
-      try {
-        const response = await axios.put(
-          `http://localhost:8095/api/v1/income/update/${currentIncome.id}`,
-          updatedIncome,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        console.log('Success:', response.data);
-        setIncomesData(incomesData.map(income => 
-          income.id === currentIncome.id ? { ...income, ...response.data } : income
-        ));
-      } catch (error) {
-        console.error('Error:', error.response ? error.response.data : error.message);
-      }
-      resetForm();
-     // setEditing(false);
-    } else {
-      
-      
+    const token = Cookies.get('token');
+
     if (!name || !amount || !date || !description || !category) {
       alert("All fields are required, including the category.");
       return;
     }
-    const isConfirmed = window.confirm(editing ? "Are you sure you want to update this income?" : "Are you sure you want to add this income?");
-    if (!isConfirmed) {
-      return;
-    }
-    const incomeData = {
-    //  id: editing ? currentIncome.id : Date.now(),
-      name,
-      amount,
-      date,
-      description,
-     // status: isPaid ? "PAID" : "DUE",
-      category,
-    };
-    const token = Cookies.get('token');
-     
-     const list = await axios.get(
-          "http://localhost:8095/api/v1/income/my-incomes",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-         
+
+    const confirmAction = editing ? "update" : "add";
+    const isConfirmed = window.confirm(`Are you sure you want to ${confirmAction} this income?`);
+    if (!isConfirmed) return;
+
+    const incomePayload = { name, amount: parseFloat(amount), date, description, category };
+
+    if (editing && currentIncome) {
+      try {
+        const response = await axios.put(
+          `http://localhost:8095/api/v1/income/update/${currentIncome.id}`,
+          { ...incomePayload, id: currentIncome.id },
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-        setIncomesData(list.data);
-
-       try {
-            const response = await axios.post(
-              "http://localhost:8095/api/v1/income/create",
-              incomeData,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            );    
-            setIncomesData([...incomesData, response.data]);
-            
-          } catch (error) {
-            console.error('Error while sending expense data:', error);
-          }
-
-
-
-    resetForm();
+        setAllIncomesData(prevIncomes => prevIncomes.map(inc =>
+          inc.id === currentIncome.id ? { ...inc, ...response.data } : inc
+        ));
+        resetForm();
+      } catch (error) {
+        console.error('Error updating income:', error.response ? error.response.data : error.message);
+        alert(`Failed to update income: ${error.response?.data?.message || error.message}`);
+      }
+    } else {
+      try {
+        const response = await axios.post(
+          "http://localhost:8095/api/v1/income/create",
+          incomePayload,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setAllIncomesData(prevIncomes => [...prevIncomes, response.data]);
+        resetForm();
+      } catch (error) {
+        console.error('Error creating income:', error.response ? error.response.data : error.message);
+        alert(`Failed to add income: ${error.response?.data?.message || error.message}`);
+      }
+    }
   };
-}
 
   const resetForm = () => {
     setName('');
     setAmount('');
-    setDate('');
+    setDate(new Date().toISOString().slice(0, 10));
     setDescription('');
-    setIsPaid(false);
+    // setIsPaid(false); // If using this state
+    setCategory('');
     setEditing(false);
     setCurrentIncome(null);
-    setCategory('');
   };
 
-
-
-  const indexOfLastIncome = currentPage * incomesPerPage;
-  const indexOfFirstIncome = indexOfLastIncome - incomesPerPage;
- // const currentIncomes = filteredIncomes.slice(indexOfFirstIncome, indexOfLastIncome);
-
-  // Change page function
-  const handlePreviousPage = () => {
-    setCurrentPage(prev => prev > 1 ? prev - 1 : prev);
-  };
-
-  const handleNextPage = () => {
-  //  setCurrentPage(prev => prev * incomesPerPage < filteredIncomes.length ? prev + 1 : prev);
-  };
-
-
-  
-  const handleRemove = async (id) => {
-    const isConfirmed = window.confirm("Are you sure you want to remove this expense?");
-    const token = Cookies.get('token');
-     
-    try {
-      const response = await axios.delete(`http://localhost:8095/api/v1/income/DeleteIncome/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        }
-      });
-      console.log('Success:', response.data);
-    } catch (error) {
-      console.error('Error:', error.response ? error.response.data : error.message);
-    }
-     
-    if (isConfirmed) {
-      setIncomesData(incomesData.filter(expense => expense.id !== id));
-    }
-  };
-
-  
-
-  const handleEdit = async (income) => {
+  const handleEdit = (income) => {
     setCurrentIncome(income);
     setName(income.name);
-    setAmount(income.amount);
+    setAmount(income.amount.toString());
     setDate(income.date);
     setDescription(income.description);
-    setIsPaid(income.status === "PAID");
+    // setIsPaid(income.status === "PAID"); // Assuming status field exists
     setCategory(income.category);
     setEditing(true);
-
-  }
-  const chartOptions = {
-    scales: {
-      x: {
-        type: 'time',
-        time: {
-          unit: 'day',
-        },
-        title: {
-          display: true,
-          text: 'Date',
-        },
-      },
-      y: {
-        title: {
-          display: true,
-          text: 'Income (€)',
-        },
-      },
-    },
+    window.scrollTo(0, 0);
   };
 
-  
+  const handleRemove = async (id) => {
+    if (!window.confirm("Are you sure you want to remove this income?")) return;
+    const token = Cookies.get('token');
+    try {
+      await axios.delete(`http://localhost:8095/api/v1/income/DeleteIncome/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAllIncomesData(prevIncomes => prevIncomes.filter(inc => inc.id !== id));
+    } catch (error) {
+      console.error('Error removing income:', error.response ? error.response.data : error.message);
+      alert(`Failed to remove income: ${error.response?.data?.message || error.message}`);
+    }
+  };
+
+  const handlePreviousPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+  const handleNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedMonth, searchQuery]);
+
   return (
     <Container fluid>
       <Row>
-        <Col md={2} className="sidebar">
+        <Col md={2} className="sidebar d-none d-md-block">
           <SidebarNav />
         </Col>
-        <Col md={10} className="main">
-        <BreadcrumbAndProfile 
-           username={Username1} 
-          role="Freelancer React Developer" 
-          pageTitle="Incomes"
-          breadcrumbItems={[
-          { name: 'Dashboard', path: '/dashboard', active: false },
-          { name: 'Incomes', path: '/incomes', active: true }
-          ]}
+        <Col xs={12} md={10} className="main-content-area"> {/* Applied generic class */}
+          <BreadcrumbAndProfile
+            username={Username1}
+            role="Freelancer React Developer"
+            pageTitle="Manage Incomes"
+            breadcrumbItems={[
+              { name: 'Dashboard', path: '/dashboard', active: false },
+              { name: 'Incomes', path: '/incomes', active: true }
+            ]}
           />
-          <InputGroup className="mb-3">
-            <FormControl
-               placeholder="Search by date, name, or category..."
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </InputGroup>
 
-
-          <Row>
+          <Row className="mb-3 align-items-center mt-4">
+            <Col md={6}>
+              <InputGroup>
+                <FormControl
+                  type="month"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  aria-label="Select month for incomes"
+                  style={{ maxWidth: '200px' }}
+                />
+                <FormControl
+                  placeholder="Search incomes..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="Search incomes"
+                />
+              </InputGroup>
+            </Col>
+            <Col md={6} className="text-md-end mt-2 mt-md-0">
+                <Button onClick={exportToExcel} className="excel-button"> {/* Applied generic class */}
+                    <FontAwesomeIcon icon={faFileExcel} className="icon-left" /> Export Current View
+                </Button>
+            </Col>
+          </Row>
 
           {searchQuery.trim() !== '' && (
-    <Table className="circular-corners"  striped bordered hover responsive isHovered >
-      <thead>
-        <tr >
-          <th >Name</th>
-          <th >Description</th>
-          <th>Amount</th>
-          <th>Date</th>
-          <th>Category</th>
-        </tr>
-      </thead>
-      <tbody>
-        {incomesData
-          .filter((item) => item.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.amount.toString().includes(searchQuery) ||
-          item.category.toLowerCase().includes(searchQuery.toLowerCase()))
-          .map((item, index) => (
-            <tr key={index}>
-              <td>{item.name}</td>
-              <td>{item.description}</td>
-              <td>{item.amount} €</td>
-              <td>{item.date}</td>
-              <td>{item.category}</td>
-            </tr>
-          ))}
-      </tbody>
-    </Table>
-)}
-          <Col md={6}>
-  <motion.div
-    initial={{ opacity: 0, y: 20 }} // Initial state: transparent and slightly below its final position
-    animate={{ opacity: 1, y: 0 }} // Animate to: fully opaque and in its final position
-    transition={{ duration: 0.5, delay: 0.2 }} // Customize the duration and add a delay if desired
-  >
-    <Card className="mt-3 total">
-      <Card.Body>
-        <Card.Title>Total Income</Card.Title>
-        <Card.Text>
-         {totalAmount} €
-        </Card.Text>
-      </Card.Body>
-    </Card>
-  </motion.div>
-</Col>
+            <Card className="mb-3">
+              <Card.Header>{currentIncomes.length > 0 ? `Search Results (${currentIncomes.length} found)` : 'No Results Found'}</Card.Header>
+              {currentIncomes.length > 0 && (
+                <Table className="app-table" striped bordered hover responsive> {/* Applied generic class */}
+                  <thead>
+                      <tr>
+                      <th>Name</th>
+                      <th>Description</th>
+                      <th>Amount</th>
+                      <th>Date</th>
+                      <th>Category</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      {currentIncomes.map((item) => (
+                      <tr key={item.id}>
+                          <td>{item.name}</td>
+                          <td>{item.description}</td>
+                          <td>{parseFloat(item.amount || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</td>
+                          <td>{new Date(item.date).toLocaleDateString()}</td>
+                          <td>{item.category}</td>
+                      </tr>
+                      ))}
+                  </tbody>
+                </Table>
+              )}
+            </Card>
+           )}
 
-    <Col md={6}>
-    <div className="chart-container">
-      
-    </div>
-  </Col>
-</Row>
+          <Row>
+            <Col md={12}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <Card className="mt-3 total-summary-card"> {/* Applied generic class */}
+                  <Card.Body>
+                    <Card.Title>Total Income for {selectedMonth ? new Date(selectedMonth + '-02').toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'All Time'}</Card.Title>
+                    <Card.Text className="total-amount-text"> {/* Applied generic class */}
+                      {totalMonthlyAmount.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                    </Card.Text>
+                  </Card.Body>
+                </Card>
+              </motion.div>
+            </Col>
+          </Row>
 
-<Form onSubmit={handleSubmit}>
-  <Row className="grid-row">
-    <Col md={4}>
-      <Form.Group>
-        <Form.Label>Name</Form.Label>
-        <Form.Control type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Income Name" required />
-      </Form.Group>
-    </Col>
-    <Col md={4}>
-      <Form.Group>
-        <Form.Label>Description</Form.Label>
-        <Form.Control type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Short description" required />
-      </Form.Group>
-    </Col>
-    <Col md={4}>
-      <Form.Group>
-        <Form.Label>Amount</Form.Label>
-        <Form.Control type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Income Amount in Euros" required />
-      </Form.Group>
-    </Col>
-  </Row>
-  <Row className="grid-row">
-    <Col md={4}>
-      <Form.Group>
-        <Form.Label>Date</Form.Label>
-        <Form.Control type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
-      </Form.Group>
-    </Col>
-    <Col md={4}>
-      <Form.Group>
-        <Form.Label>Category</Form.Label>
-        <Form.Select value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option value="">Select a category</option>
-          {categories.map((cat, index) => (
-            <option key={index} value={cat}>{cat}</option>
-          ))}
-        </Form.Select>
-      </Form.Group>
-    </Col>
-    <Col md={4} className="d-flex align-items-center">
-      <Form.Group>
-        <Form.Check type="checkbox" label="Paid" checked={isPaid} onChange={(e) => setIsPaid(e.target.checked)} />
-      </Form.Group>
-    </Col>
-  </Row>
-  <Button type="submit" className="mt-3 primary-button">{editing ? "Update Income" : "Add Income"}<FontAwesomeIcon icon={faPlusCircle} className="icon-right"/></Button>
-</Form>
+          <Form onSubmit={handleSubmit} className="mt-4 app-form"> {/* Applied generic class */}
+            <h5 className="mb-3">{editing ? 'Edit Income' : 'Add New Income'}</h5>
+            <Row>
+              <Col md={6} lg={4} className="mb-3">
+                <Form.Group>
+                  <Form.Label>Income Name</Form.Label>
+                  <Form.Control type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Project Alpha" required />
+                </Form.Group>
+              </Col>
+              <Col md={6} lg={4} className="mb-3">
+                <Form.Group>
+                  <Form.Label>Description</Form.Label>
+                  <Form.Control type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g., Client X payment" required />
+                </Form.Group>
+              </Col>
+              <Col md={6} lg={4} className="mb-3">
+                <Form.Group>
+                  <Form.Label>Amount (€)</Form.Label>
+                  <Form.Control type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="e.g., 1200.00" required />
+                </Form.Group>
+              </Col>
+              <Col md={6} lg={4} className="mb-3">
+                <Form.Group>
+                  <Form.Label>Date</Form.Label>
+                  <Form.Control type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+                </Form.Group>
+              </Col>
+              <Col md={6} lg={4} className="mb-3">
+                <Form.Group>
+                  <Form.Label>Category</Form.Label>
+                  <Form.Select value={category} onChange={(e) => setCategory(e.target.value)} required>
+                    <option value="">Select Category</option>
+                    {categories.map((cat, index) => (
+                      <option key={index} value={cat}>{cat}</option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={12} lg={4} className="d-flex align-items-end mb-3">
+                <Button type="submit" className="primary-action-button w-100"> {/* Applied generic class */}
+                  <FontAwesomeIcon icon={editing ? faPenToSquare : faPlusCircle} className="icon-left" />
+                  {editing ? "Update Income" : "Add Income"}
+                </Button>
+              </Col>
+            </Row>
+            {editing && (
+                 <Button variant="outline-secondary" onClick={resetForm} className="mt-2">Cancel Edit</Button>
+            )}
+          </Form>
 
+          <h4 className="mt-5">Incomes for {selectedMonth ? new Date(selectedMonth + '-02').toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'All Time'}</h4>
+          {currentIncomes.length > 0 ? (
+            <ListGroup className="mt-3">
+            {currentIncomes.map((incomeItem) => (
+              <ListGroup.Item key={incomeItem.id} className="data-list-item"> {/* Applied generic class */}
+                <div className="item-details"> {/* Applied generic class */}
+                  <strong>{incomeItem.name}</strong>: {parseFloat(incomeItem.amount || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })} ({new Date(incomeItem.date).toLocaleDateString()})
+                  <br />
+                  <small><em>{incomeItem.description}</em> - Category: {incomeItem.category || 'N/A'}</small>
+                </div>
+                <div className="item-actions"> {/* Applied generic class */}
+                  <Button className="edit-button me-2" size="sm" onClick={() => handleEdit(incomeItem)}> {/* Applied generic class */}
+                    <FontAwesomeIcon icon={faPenToSquare} />
+                  </Button>
+                  <Button className="remove-button" variant="danger" size="sm" onClick={() => handleRemove(incomeItem.id)}> {/* Applied generic class */}
+                    <FontAwesomeIcon icon={faTrashCan} />
+                  </Button>
+                </div>
+              </ListGroup.Item>
+            ))}
+          </ListGroup>
+          ) : (
+            <p className="mt-3 text-muted">No incomes recorded for this period. Add some using the form above!</p>
+          )}
 
-<ListGroup className="mt-3">
-  {incomesData.map((IncomesData) => (
-    <ListGroup.Item key={IncomesData.id} className="list-group-item">
-      <div className="expense-details">
-        {` ${IncomesData.id}-Name: ${IncomesData.name} - Amount: €${IncomesData.amount} - Date: ${IncomesData.date} - Type: ${IncomesData.description} - Category: ${IncomesData.category || 'Not specified'} - Status: ${IncomesData.status}`}
-      </div>
-      <div className="button-group">
-        <Button className="edit" size="sm" onClick={() => handleEdit(IncomesData)} style={{backgroundColor:'#004883', color: 'white', marginRight: '5px' }}>
-          <FontAwesomeIcon icon={faPenToSquare} className="icon-left"/>Edit
-        </Button>
-        <Button variant="danger" size="sm"  onClick={() => handleRemove(IncomesData.id)} style={{backgroundColor:'#ff4d4d', color: 'white'}}>
-          <FontAwesomeIcon icon={faTrashCan} className="icon-left"/>Remove
-        </Button>
-      </div>
-    </ListGroup.Item>
-  ))}
-</ListGroup>
-
-        <Button onClick={exportToExcel} className="mt-3 excel-button">
-          <FontAwesomeIcon icon={faFileExcel} className="icon-left" /> Export to Excel
-      </Button>
-
-                    {/* Pagination Controls */}
-            <div className="d-flex justify-content-between mt-3">
-            <Button onClick={handlePreviousPage} className="page" disabled={currentPage === 1}><FontAwesomeIcon icon={faArrowCircleLeft} /></Button>
-           
-          </div>
+          {totalPages > 1 && (
+            <div className="pagination-controls mt-4"> {/* Applied generic class */}
+              <Button onClick={handlePreviousPage} className="pagination-button" disabled={currentPage === 1}> {/* Applied generic class */}
+                <FontAwesomeIcon icon={faArrowCircleLeft} /> Previous
+              </Button>
+              <span>Page {currentPage} of {totalPages}</span>
+              <Button onClick={handleNextPage} className="pagination-button" disabled={currentPage === totalPages}> {/* Applied generic class */}
+                Next <FontAwesomeIcon icon={faArrowCircleRight} />
+              </Button>
+            </div>
+          )}
         </Col>
       </Row>
     </Container>

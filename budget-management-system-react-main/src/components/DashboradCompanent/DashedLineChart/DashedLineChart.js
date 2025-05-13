@@ -1,83 +1,72 @@
-import React, { PureComponent } from 'react';
+// src/components/DashboradCompanent/DashedLineChart/DashedLineChart.js
+import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-const data = [
-  {
-    name: 'Page A',
-    uv: 4000,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page B',
-    uv: 3000,
-    pv: 1398,
-    amt: 2210,
-  },
-  {
-    name: 'Page C',
-    uv: 2000,
-    pv: 9800,
-    amt: 2290,
-  },
-  {
-    name: 'Page D',
-    uv: 2780,
-    pv: 3908,
-    amt: 2000,
-  },
-  {
-    name: 'Page E',
-    uv: 1890,
-    pv: 4800,
-    amt: 2181,
-  },
-  
-];
+// Define blue colors
+const primaryBlue = "#0052CC"; // Main blue
+const secondaryBlue = "#5E9DFF"; // Lighter, distinct blue
 
-export default class Example extends PureComponent {
-  static demoUrl = 'https://codesandbox.io/p/sandbox/dashed-line-chart-9rttw2';
+function DashedLineChart({ chartData }) {
 
-  render() {
-    return (
-      <ResponsiveContainer width="90%" height="80%" style={{ borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-        <h2 className="panel-title">Income & Expenses</h2>
-      <LineChart
-        width={100}
-        height={100}
-        data={data}
-        margin={{
-          top: 10,
-          right: 20,
-          left: 10,
-          bottom: 10,
-        }}
-      >
-        <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-        <XAxis dataKey="name" tick={{ fill: '#333333' }} />
-        <YAxis tick={{ fill: '#333333' }} />
-        <Tooltip contentStyle={{ backgroundColor: '#fff', borderRadius: '4px' }} />
-        <Legend wrapperStyle={{ paddingTop: '10px' }} />
-        <Line 
-          type="monotone" 
-          dataKey="pv" 
-          stroke="#3366cc" 
-          strokeWidth={2}
-          strokeDasharray="5 5" 
-          dot={{ fill: '#3366cc', r: 4 }}
-          activeDot={{ r: 6 }}
-        />
-        <Line 
-          type="monotone" 
-          dataKey="uv" 
-          stroke="#00e0d6" 
-          strokeWidth={2}
-          strokeDasharray="3 4 5 2" 
-          dot={{ fill: '#00e0d6', r: 4 }}
-          activeDot={{ r: 6 }}
-        />
-      </LineChart>
-    </ResponsiveContainer>
-    );
+  if (!chartData || chartData.length === 0) {
+    return <div style={{ textAlign: 'center', padding: '20px', color: '#6c757d' }}>Loading chart data...</div>;
   }
+
+  return (
+    // This outer div is centered by align-items-center in Dashboard.js
+    // Its internal flex ensures title is above chart
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <h3 className="panel-title" style={{ textAlign: 'center', marginBottom: '15px', width: '100%', color: '#333' }}>
+        Yearly Income & Expenses Overview
+      </h3>
+      {/* Responsive container keeps chart flexible but centered due to parent */}
+      <ResponsiveContainer width="95%" height="85%">
+        <LineChart
+          data={chartData}
+          margin={{
+            top: 5,
+            right: 30,
+            left: 20,
+            bottom: 5,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+          <XAxis dataKey="name" tick={{ fill: '#666', fontSize: 12 }} axisLine={{ stroke: '#ccc' }} tickLine={{ stroke: '#ccc' }} />
+          <YAxis tick={{ fill: '#666', fontSize: 12 }} axisLine={{ stroke: '#ccc' }} tickLine={{ stroke: '#ccc' }} tickFormatter={(value) => `$${value/1000}k`} /> {/* Example: Format Y-axis ticks */}
+          <Tooltip
+            contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: '5px', border: '1px solid #ddd', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
+            formatter={(value, name) => [`$${value.toFixed(2)}`, name]} // Format value and show name
+            labelStyle={{ fontWeight: 'bold', color: '#333' }}
+            itemStyle={{ color: '#555' }}
+          />
+          <Legend wrapperStyle={{ paddingTop: '15px' }} />
+
+          {/* Income Line - Solid Primary Blue */}
+          <Line
+            type="monotone"
+            dataKey="income"
+            name="Income"
+            stroke={primaryBlue}
+            strokeWidth={2.5} // Slightly thicker
+            dot={{ fill: primaryBlue, r: 3, strokeWidth: 1 }} // Smaller dots
+            activeDot={{ r: 6, strokeWidth: 1, stroke: '#000' }}
+          />
+
+          {/* Expense Line - Dashed Secondary Blue */}
+          <Line
+            type="monotone"
+            dataKey="expense"
+            name="Expense"
+            stroke={secondaryBlue}
+            strokeWidth={2.5}
+            strokeDasharray="6 4" // Different dash pattern
+            dot={{ fill: secondaryBlue, r: 3, strokeWidth: 1 }}
+            activeDot={{ r: 6, strokeWidth: 1, stroke: '#000' }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
 }
+
+export default DashedLineChart;

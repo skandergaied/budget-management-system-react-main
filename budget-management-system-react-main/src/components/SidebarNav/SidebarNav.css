@@ -1,6 +1,7 @@
 .sidebar {
   background-image: linear-gradient(to right, var(--primary-color), var(--hover-color));
   min-height: 100vh; /* Full height */
+  
 }
 
 .flex-column {

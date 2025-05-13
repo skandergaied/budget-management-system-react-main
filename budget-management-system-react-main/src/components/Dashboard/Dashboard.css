@@ -2,10 +2,11 @@
 .dashboard-container {
   background-color: #f5f7fa;
   min-height: 100vh;
+  /* Ensure this container or the body is the primary scroll area */
 }
 
 .main-content {
-  padding: 1.5rem;
+  padding: 1.5rem; /* This will be overridden by more specific padding below */
   background-color: #f5f7fa;
 }
 
@@ -22,7 +23,7 @@
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   padding: 1.5rem;
-  height: 100%;
+  height: 100%; /* This might be overridden by specific panel needs, e.g., sticky panel */
   margin-bottom: 1rem;
 }
 
@@ -53,19 +54,6 @@
   background-color: #5a6268;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .sidebar {
-    display: none;
-  }
-  
-  .main-content {
-    width: 100%;
-    max-width: 100%;
-    flex: 0 0 100%;
-  }
 }
 
 /* For the InfoCard component - add these classes if not already defined */
@@ -102,28 +90,77 @@
   text-decoration: underline;
 }
 
-
-
+/* Padding adjustments for main-content based on screen size */
 .main-content {
-    padding: 20px;
-  }
-
+    padding: 20px; /* Default padding for larger screens */
+}
 
 /* Media query for iPad screens (between 577px and 768px) */
 @media (min-width: 577px) and (max-width: 768px) {
-
   .main-content {
-    padding: 10px;
+    padding: 15px; /* Adjusted from 10px to be slightly more spacious */
   }
-  
 }
 
-
-@media (max-width: 576px) {
-    
-    .main-content {
-      padding: 10px;
-    }
-    
+@media (max-width: 768px) { /* This will also cover screens 576px and below */
+  .sidebar {
+    display: none !important; /* Ensure sidebar is hidden */
   }
   
+  .main-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+    padding: 15px; /* Consistent padding for tablet and smaller */
+  }
+
+  .crypto-sidebar {
+    margin-top: 20px !important; /* Reduce margin-top on smaller screens if it becomes sticky */
+  }
+}
+
+@media (max-width: 576px) {
+    .main-content {
+      padding: 10px; /* Specific padding for very small screens */
+    }
+}
+
+/* Sticky Crypto Panel Styling */
+.crypto-sidebar {
+  /* No specific overflow properties here that would break stickiness relative to viewport */
+  /* The align-self: flex-start; might be useful if the main content column is much taller,
+     so this column starts at the top of the row. Bootstrap handles this mostly. */
+}
+
+.crypto-panel-sticky {
+  /* This class should be applied to the motion.div wrapping the <Coins /> component */
+  position: -webkit-sticky; /* For Safari */
+  position: sticky;
+  top: 80px; /* Adjust this value as needed. 
+                 It should align with where you want the panel to stick from the viewport top.
+                 Matches the marginTop you had on the Col in Dashboard.js initially. */
+  align-self: flex-start; /* Helps the panel not stretch if the column is taller than it */
+  /* The dashboard-panel class provides background, padding, etc.
+     The height of this sticky panel will be determined by the content of the Coins component.
+     The Coins component (.coins-list) already handles internal scrolling. */
+
+  /* Optional: If the entire crypto panel (including its header and list)
+     can become taller than the viewport height minus the 'top' value,
+     and you want the *panel itself* to scroll, you could add: */
+  /* max-height: calc(100vh - 80px - 20px); */ /* (viewport_height - sticky_top_offset - some_bottom_margin) */
+  /* overflow-y: auto; */
+}
+
+/* On smaller screens, you might want the sticky panel to be closer to the top */
+@media (max-width: 768px) {
+  .crypto-panel-sticky {
+    top: 20px; /* Stick closer to the top on smaller screens */
+    /* If the crypto sidebar is stacked below main content on small screens,
+       you might not want it sticky, or sticky behavior will be different.
+       Bootstrap's Col xs={12} would stack it. The sticky will apply within its
+       new flow context. If you want to disable sticky on small screens:
+       position: static; (or relative, depending on original layout)
+    */
+  }
+}
+

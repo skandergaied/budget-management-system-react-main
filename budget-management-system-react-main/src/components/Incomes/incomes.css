@@ -1,7 +1,166 @@
-.circular-corners {
-    border-radius: 20px;
-    overflow: hidden;
-  }
-  .dashboard-panel {
-    height: 100%;
-  }
+/* src/components/Incomes/incomes.css */
+
+/* General Content Area Styling (Matches .main-content-area in expenses.css) */
+.main-content-area-incomes { /* Using a distinct class for incomes page if needed, otherwise use the same class as expenses if they share layout */
+  padding: 1.5rem;
+  background-color: #f8f9fa; /* Light background for content area */
+}
+
+/* Table Styling (Matches .app-table in expenses.css) */
+.app-table-incomes { /* Using a distinct class for incomes page */
+  margin-top: 1rem;
+  border-radius: 0.3rem;
+  overflow: hidden; /* For rounded corners on table */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.app-table-incomes th { /* Targeting thead cells in incomes table */
+  background-color: #e9ecef; /* Light header for table */
+  color: #495057;
+}
+/* If using the same table class name 'app-table' in both Incomes.js and Expenses.js, you don't need '-incomes' suffix */
+
+
+/* Excel Button Styling (Matches .excel-button in expenses.css) */
+.excel-button-incomes { /* Using a distinct class for incomes page */
+background-color: #1D6F42; /* Excel green */
+color: white;
+border: none;
+}
+.excel-button-incomes:hover {
+background-color: #15502F;
+}
+/* If using the same button class name 'excel-button' in both, you don't need '-incomes' suffix */
+
+/* Icon Styling (Shared) */
+.icon-left {
+margin-right: 8px;
+}
+.icon-right {
+margin-left: 8px;
+}
+
+/* Total Summary Card Styling (Matches .total-summary-card in expenses.css) */
+.total-summary-card-incomes { /* Using a distinct class for incomes page */
+background-color: #e9f5ff; /* Light blue */
+border-left: 5px solid #0d6efd; /* Bootstrap primary blue */
+box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+.total-summary-card-incomes .card-title { /* Targeting Card.Title within incomes summary card */
+color: #0a58ca; /* Darker blue */
+font-weight: 500;
+}
+.total-amount-text-incomes { /* Targeting Card.Text for total amount in incomes */
+font-size: 1.75rem;
+font-weight: bold;
+color: #343a40; /* Dark gray for amount */
+}
+/* If using the same card class name 'total-summary-card' etc. in both, you don't need '-incomes' suffix */
+
+
+/* Form Styling (Matches .app-form in expenses.css) */
+.app-form-incomes { /* Using a distinct class for incomes page */
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.app-form-incomes .form-group label { /* Targeting form labels in incomes form */
+  font-weight: 500;
+  color: #495057;
+}
+/* If using the same form class name 'app-form' in both, you don't need '-incomes' suffix */
+
+
+/* Primary Action Button Styling (Matches .primary-action-button in expenses.css) */
+.primary-action-button-incomes { /* Using a distinct class for incomes page */
+background-color: #0d6efd;
+border-color: #0d6efd;
+color: white;
+transition: background-color 0.2s ease-in-out;
+}
+.primary-action-button-incomes:hover {
+background-color: #0b5ed7;
+border-color: #0a58ca;
+}
+/* If using the same button class name 'primary-action-button' in both, you don't need '-incomes' suffix */
+
+
+/* Data List Item Styling (Matches .data-list-item in expenses.css) */
+.data-list-item-incomes { /* Using a distinct class for incomes page */
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 0.8rem 1rem;
+border-radius: .3rem;
+margin-bottom: 0.5rem;
+background-color: #fff;
+box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+transition: box-shadow 0.2s ease;
+}
+.data-list-item-incomes:hover {
+  box-shadow: 0 3px 7px rgba(0,0,0,0.1);
+}
+/* If using the same list item class name 'data-list-item' in both, you don't need '-incomes' suffix */
+
+/* Item Details Styling (Matches .item-details in expenses.css) */
+.item-details-incomes { /* Using a distinct class for incomes page */
+flex-grow: 1;
+margin-right: 1rem;
+color: #495057;
+}
+.item-details-incomes strong {
+  color: #212529;
+}
+.item-details-incomes small {
+  color: #6c757d;
+  display: block; /* Makes sure it takes its own line */
+  margin-top: 0.2rem;
+}
+/* If using the same details class name 'item-details' in both, you don't need '-incomes' suffix */
+
+
+/* Item Actions Styling (Matches .item-actions in expenses.css) */
+.item-actions-incomes .btn { /* Using a distinct class for incomes page */
+padding: 0.25rem 0.5rem; /* Smaller buttons */
+font-size: 0.8rem;
+}
+.edit-button-incomes { /* Using a distinct class for incomes page */
+background-color: #6c757d; /* Bootstrap secondary */
+color: white;
+border: none;
+}
+.edit-button-incomes:hover {
+background-color: #5a6268;
+}
+.remove-button-incomes { /* Using a distinct class for incomes page */
+  background-color: #dc3545; /* Bootstrap danger */
+  color: white;
+  border: none;
+}
+.remove-button-incomes:hover {
+  background-color: #bb2d3b;
+}
+/* If using the same action button class names 'edit-button', 'remove-button' in both, you don't need '-incomes' suffix */
+
+
+/* Pagination Controls Styling (Matches .pagination-controls in expenses.css) */
+.pagination-controls-incomes { /* Using a distinct class for incomes page */
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 0.5rem 0;
+}
+.pagination-button-incomes { /* Using a distinct class for incomes page */
+background-color: #0d6efd;
+color: white;
+border: none;
+padding: 0.5rem 1rem;
+}
+.pagination-button-incomes:hover {
+background-color: #0b5ed7;
+}
+.pagination-button-incomes:disabled {
+background-color: #6c757d;
+opacity: 0.65;
+}
+/* If using the same pagination class names in both, you don't need '-incomes' suffix */

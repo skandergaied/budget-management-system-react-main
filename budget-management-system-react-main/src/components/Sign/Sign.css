@@ -1,154 +1,243 @@
+/* SignIn.css or Sign.css */
 
-/* SignIn.css */
+/* Ensure CSS Variables are defined in :root in a global stylesheet */
+
 .signin {
-    background-image: linear-gradient(to right, var(--primary-color), var(--hover-color));
+    /* background-image: linear-gradient(to right, var(--primary-color), var(--hover-color)); */ /* This was in your original, but your React component uses a background image URL. Choose one. */
     height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-  }
+    /* If using the image from React, you might not need the gradient here unless it's an overlay */
+}
   
-  .signin-container {
+.signin-container {
     padding: 2rem;
-    background-color: var(--background-color);
+    background-color: var(--background-color, #fff); /* Added fallback */
     border-radius: 10px;
     width: 100%;
     max-width: 400px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Slightly enhanced shadow */
+}
   
-  .google-login {
-    margin-bottom: 2rem;
-  }
+/* .google-login { /* Not used in the provided React component, remove if not needed */
+/*    margin-bottom: 2rem; */
+/* } */
   
-  .form-group {
-    margin-bottom: 1rem;
-  }
+.form-group {
+    margin-bottom: 1.25rem; /* Slightly increased for more space */
+}
   
-  .input-icon-container {
+.input-icon-container {
     position: relative;
-    display: flex;
-    align-items: center;
-  }
+    display: flex; /* Already here, good */
+    align-items: center; /* Already here, good */
+}
   
-  .input-icon {
+.input-icon {
     position: absolute;
-    left: 10px; /* Adjust based on actual padding of input */
-    color: var(--primary-color);
+    left: 15px; /* Adjusted for a bit more padding */
+    color: var(--primary-color, #4A90E2);
     z-index: 10;
-    margin-right: 5px;
-  }
+    /* margin-right: 5px; */ /* Not needed with absolute positioning and input padding-left */
+}
   
-  .form-control {
-    padding-left: 30px; /* Adjust so text does not overlap the icon */
-    height: 48px; /* Increase the height as needed */
-    padding-top: 10px; /* Adjust top padding to vertically center the text */
-    padding-bottom: 10px; /* Adjust bottom padding to vertically center the text */
-    border-radius: 20px !important; /* Keep inputs rounded */
-  }
+.form-control {
+    padding-left: 40px; /* Increased to ensure icon doesn't overlap, adjust as needed */
+    height: 48px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-radius: 20px !important; /* Keeps inputs rounded, important is strong, use if necessary */
+    border: 1px solid #ced4da; /* Standard Bootstrap border, customize if needed */
+    background-clip: padding-box; /* Ensures background doesn't go under border with border-radius */
+}
+
+.form-control:focus {
+    border-color: var(--primary-color, #4A90E2);
+    box-shadow: 0 0 0 0.2rem rgba(var(--primary-color-rgb, 74, 144, 226), 0.25); /* Define --primary-color-rgb or use a fixed value */
+}
+
+.form-control.is-invalid {
+    border-color: var(--danger-color, #dc3545) !important; /* Make sure invalid border is visible */
+    padding-right: calc(1.5em + .75rem); /* Space for Bootstrap's default validation icon if it ever shows */
+    background-image: none; /* Remove Bootstrap's default invalid icon if you don't want it */
+}
+.form-control.is-invalid:focus {
+     box-shadow: 0 0 0 0.2rem rgba(var(--danger-color-rgb, 220, 53, 69), 0.25);
+}
   
   
-  /* Style adjustments for buttons */
-  .btn-fullwidth, .btn-login {
+/* Style adjustments for buttons */
+.btn-fullwidth, .btn-login {
     width: 100%;
     display: block;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    border-radius: 5px; /* Matched with inputs for consistency */
-    border: 2px solid var(--primary-color);
-    padding: 12px 24px; /* Adjusted padding for bigger height */
-    transition: color 0.3s ease, transform 0.3s ease; /* Add transition for smooth color change and transform */
-  }
+    border-radius: 20px; /* Matched with inputs for consistency */
+    border: 2px solid var(--primary-color, #4A90E2);
+    padding: 10px 24px; /* Adjusted padding */
+    font-weight: 600;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
+}
   
-  .btn-fullwidth {
-    background-color: var(--primary-color);
-    color: var(--secondary-color);
-  }
+.btn-fullwidth { /* Assuming this is a primary action button style */
+    background-color: var(--primary-color, #4A90E2);
+    color: var(--secondary-color, #fff);
+}
 
-  .btn-fullwidth:hover {
-    background-color: var(--hover-color);
-    color: var(--secondary-color);
-    transform: scale(1.05); /* Apply scale transform for zoom effect */
-  }
+.btn-fullwidth:hover {
+    background-color: var(--hover-color, #357ABD);
+    color: var(--secondary-color, #fff);
+    transform: translateY(-2px); /* Softer hover effect */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
 
-/* Style adjustments for buttons */
-.btn-login {
-  background-color: var(--secondary-color);
-  color: var(--primary-color);
-  /* Your existing styles */
+.btn-login { /* This is your "Sign Up" button */
+    background-color: var(--primary-color, #4A90E2); /* Changed to primary for main action */
+    color: var(--secondary-color, #fff); /* Text color white */
+    border: 2px solid var(--primary-color, #4A90E2); /* Border same as background */
 }
 
 .btn-login:hover {
-  background-color: var(--secondary-hover-color);
-  transform: scale(1.05); /* Apply scale transform for zoom effect */
-  /* Your existing styles */
+    background-color: var(--hover-color, #357ABD); /* Darker shade on hover */
+    border-color: var(--hover-color, #357ABD);
+    color: var(--secondary-color, #fff);
+    transform: translateY(-2px); /* Softer hover effect */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-/* Adjustments for FontAwesome icon movement on hover */
+/* Adjustments for FontAwesome icon movement on hover within .btn-login */
+.btn-login svg { /* Target direct SVG child for specificity */
+    margin-left: 8px;
+    transition: transform 0.3s ease;
+}
 .btn-login:hover svg {
-  transform: translateX(5px);
-  transition: transform 0.3s ease;
+    transform: translateX(5px);
 }
 
-  
-  .icon {
+.btn-login:disabled {
+    background-color: #cccccc;
+    border-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+}
+.btn-login:disabled svg {
+    transform: none; /* Prevent icon animation on disabled button */
+}
+
+.icon { /* General icon class, not explicitly used in current React but good to have */
     margin-right: 10px;
-  }
+}
   
-  .text-center {
-    margin-top: 2rem;
-  }
+.text-center {
+    /* margin-top: 2rem; */ /* Removed default, apply margin where needed specifically */
+     /* e.g., in React use <div className="text-center mt-4"> */
+}
   
-  .forgot-password {
-    display: block;
-    margin-bottom: 1rem;
-  }
-  
-  .text-danger {
-    color: #dc3545;
+.forgot-password, .dark-link {
+    display: inline-block; /* Changed from block for "Sign In" link */
+    color: var(--primary-color, #4A90E2);
+    text-decoration: none;
+    font-weight: 500;
+}
+.forgot-password:hover, .dark-link:hover {
+    color: var(--hover-color, #357ABD);
+    text-decoration: underline;
+}
+
+.text-danger { /* For inline text errors if not using invalid-feedback */
+    color: var(--danger-color, #dc3545);
     margin-top: 0.25rem;
     font-size: 0.875rem;
-    padding-left: 0.75rem;
-  }
+    /* padding-left: 0.75rem; */ /* Remove if not needed, or adjust */
+}
   
-  .bold-text {
+.bold-text {
     font-weight: bold;
-  }
+}
   
-  .invalid-feedback {
-    color: red;
+.invalid-feedback {
+    /* color: red; */ /* Use variable for consistency */
+    color: var(--danger-color, #dc3545);
     font-size: 0.875em;
     margin-top: 0.25rem;
-  }
+    display: block; /* Ensure it's visible */
+    width: 100%; /* Take full width for proper alignment */
+    padding-left: 5px; /* Small indent */
+}
   
-  .toggle-password {
+.toggle-password {
     cursor: pointer;
     position: absolute;
-    right: 10px;
+    right: 15px; /* Adjusted for a bit more padding */
     top: 50%;
     transform: translateY(-50%);
-  }
+    color: #6c757d; /* Bootstrap's muted color */
+}
+.toggle-password:hover {
+    color: var(--primary-color, #4A90E2);
+}
   
-  .alert-danger {
-    color: #721c24;
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
+/* Alert Styling */
+.alert { /* Base for all alerts */
     padding: 0.75rem 1.25rem;
     margin-bottom: 1rem;
     border: 1px solid transparent;
-    border-radius: 0.25rem;
-  }
-  
-  .btn-login:disabled {
-    background-color: #cccccc;
-    border-color: #cccccc;
-  }
-  
+    border-radius: 0.375rem; /* Consistent with Bootstrap 5 */
+    text-align: left; /* Default for alerts */
+}
 
+.alert-danger {
+    color: var(--danger-text-color, #721c24); /* Define this or use fixed */
+    background-color: var(--danger-bg-color, #f8d7da); /* Define this or use fixed */
+    border-color: var(--danger-border-color, #f5c6cb); /* Define this or use fixed */
+}
 
-  @media (max-width: 768px) {
+/* NEW: Styling for the "Already have an account" / info alert */
+.alert-info {
+    color: var(--info-text-color, #0c5460); /* Use your CSS variable */
+    background-color: var(--info-bg-color, #d1ecf1); /* Use your CSS variable */
+    border-color: var(--info-border-color, #bee5eb); /* Use your CSS variable */
+}
+.alert-info p {
+    margin-bottom: 0.5rem; /* Space between text and button */
+}
+.alert-info.text-center { /* If you apply text-center to the alert div itself */
+    text-align: center;
+}
+
+/* NEW: Styling for the "Go to Login" button inside the alert */
+.alert-info .btn-primary.btn-sm {
+    background-color: var(--primary-color, #007bff);
+    border-color: var(--primary-color, #007bff);
+    color: var(--secondary-color, #fff);
+    padding: 0.35rem 0.75rem; /* Slightly larger than default btn-sm */
+    font-size: 0.875rem;
+    border-radius: 20px; /* Consistent with other buttons/inputs */
+    font-weight: 500;
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
+.alert-info .btn-primary.btn-sm:hover {
+    background-color: var(--hover-color, #0056b3);
+    border-color: var(--hover-color, #0056b3);
+    color: var(--secondary-color, #fff);
+}
+
+/* Paragraph inside form, e.g., "Do you have an account?" */
+.signin-container form .text-center p {
+    margin-bottom: 0.5rem; /* Reduce bottom margin if it's directly above the button */
+    margin-top: 1rem; /* Add some space above it */
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
     .signin-container {
-      padding: 1rem;
-      margin: 0 20px;
+      padding: 1.5rem; /* Slightly adjusted for smaller screens */
+      margin: 0 15px; /* Adjusted margin */
     }
-  }
-  
+    .form-control {
+        height: 44px; /* Slightly smaller on mobile if desired */
+    }
+    .btn-fullwidth, .btn-login {
+        padding: 9px 20px;
+    }
+}
