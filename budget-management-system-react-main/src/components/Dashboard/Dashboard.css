@@ -60,7 +60,7 @@
   .sidebar {
     display: none;
   }
-  
+
   .main-content {
     width: 100%;
     max-width: 100%;
@@ -105,8 +105,8 @@
 
 
 .main-content {
-    padding: 20px;
-  }
+  padding: 20px;
+}
 
 
 /* Media query for iPad screens (between 577px and 768px) */
@@ -115,15 +115,14 @@
   .main-content {
     padding: 10px;
   }
-  
+
 }
 
 
 @media (max-width: 576px) {
-    
-    .main-content {
-      padding: 10px;
-    }
-    
+
+  .main-content {
+    padding: 10px;
   }
-  
+
+}

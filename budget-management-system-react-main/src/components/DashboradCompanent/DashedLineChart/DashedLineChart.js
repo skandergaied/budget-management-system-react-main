@@ -1,83 +1,173 @@
-import React, { PureComponent } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+// DashedLineChart.js
+import React, { useState, useEffect } from 'react';
+import { Card } from 'react-bootstrap';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
+import { fetchData } from '../../utils/api';
 
-const data = [
-  {
-    name: 'Page A',
-    uv: 4000,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page B',
-    uv: 3000,
-    pv: 1398,
-    amt: 2210,
-  },
-  {
-    name: 'Page C',
-    uv: 2000,
-    pv: 9800,
-    amt: 2290,
-  },
-  {
-    name: 'Page D',
-    uv: 2780,
-    pv: 3908,
-    amt: 2000,
-  },
-  {
-    name: 'Page E',
-    uv: 1890,
-    pv: 4800,
-    amt: 2181,
-  },
-  
-];
+// Chart.js kayıt işlemleri
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend
+);
 
-export default class Example extends PureComponent {
-  static demoUrl = 'https://codesandbox.io/p/sandbox/dashed-line-chart-9rttw2';
+function DashedLineChart() {
+  const [incomeData, setIncomeData] = useState([]);
+  const [expenseData, setExpenseData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  render() {
-    return (
-      <ResponsiveContainer width="90%" height="80%" style={{ borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-        <h2 className="panel-title">Income & Expenses</h2>
-      <LineChart
-        width={100}
-        height={100}
-        data={data}
-        margin={{
-          top: 10,
-          right: 20,
-          left: 10,
-          bottom: 10,
-        }}
-      >
-        <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-        <XAxis dataKey="name" tick={{ fill: '#333333' }} />
-        <YAxis tick={{ fill: '#333333' }} />
-        <Tooltip contentStyle={{ backgroundColor: '#fff', borderRadius: '4px' }} />
-        <Legend wrapperStyle={{ paddingTop: '10px' }} />
-        <Line 
-          type="monotone" 
-          dataKey="pv" 
-          stroke="#3366cc" 
-          strokeWidth={2}
-          strokeDasharray="5 5" 
-          dot={{ fill: '#3366cc', r: 4 }}
-          activeDot={{ r: 6 }}
-        />
-        <Line 
-          type="monotone" 
-          dataKey="uv" 
-          stroke="#00e0d6" 
-          strokeWidth={2}
-          strokeDasharray="3 4 5 2" 
-          dot={{ fill: '#00e0d6', r: 4 }}
-          activeDot={{ r: 6 }}
-        />
-      </LineChart>
-    </ResponsiveContainer>
-    );
-  }
+  useEffect(() => {
+    const fetchFinancialData = async () => {
+      try {
+        // Gelirleri getir
+        const incomesResponse = await fetchData("http://localhost:8095/api/v1/income/my-incomes");
+
+        // Giderleri getir
+        const expensesResponse = await fetchData("http://localhost:8095/api/v1/expense/all");
+
+        // Verileri işle
+        setIncomeData(incomesResponse);
+        setExpenseData(expensesResponse);
+        setLoading(false);
+      } catch (error) {
+        console.error("Veri çekme hatası:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchFinancialData();
+  }, []);
+
+  // Tarihleri ayların sırasına göre gruplamak için helper fonksiyon
+  const processDataByMonth = (data) => {
+    // Aylık verileri toplamak için boş bir nesne oluştur
+    const monthlyData = {};
+
+    // Aylar için labels oluştur (Ocak-Aralık)
+    const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+      'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+
+    // Her ay için başlangıç değeri 0 olarak ayarla
+    months.forEach(month => {
+      monthlyData[month] = 0;
+    });
+
+    // Verileri aylara göre topla
+    data.forEach(item => {
+      if (item.date) {
+        const date = new Date(item.date);
+        const month = months[date.getMonth()];
+        monthlyData[month] += parseFloat(item.amount || 0);
+      }
+    });
+
+    return {
+      labels: months,
+      values: months.map(month => monthlyData[month])
+    };
+  };
+
+  // Chart verileri oluştur
+  const chartData = {
+    labels: loading ? [] : processDataByMonth(incomeData).labels,
+    datasets: [
+      {
+        label: 'Gelirler',
+        data: loading ? [] : processDataByMonth(incomeData).values,
+        borderColor: 'rgba(75, 192, 192, 1)',
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        borderWidth: 2,
+        tension: 0.4,
+      },
+      {
+        label: 'Giderler',
+        data: loading ? [] : processDataByMonth(expenseData).values,
+        borderColor: 'rgba(255, 99, 132, 1)',
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        borderWidth: 2,
+        borderDash: [5, 5],
+        tension: 0.4,
+      },
+    ],
+  };
+
+  // Chart seçenekleri
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Aylık Gelir ve Gider Grafiği',
+        font: {
+          size: 16,
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            let label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
+            }
+            if (context.parsed.y !== null) {
+              label += new Intl.NumberFormat('tr-TR', {
+                style: 'currency',
+                currency: 'TRY'
+              }).format(context.parsed.y);
+            }
+            return label;
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: function(value) {
+            return value.toLocaleString('tr-TR', {
+              style: 'currency',
+              currency: 'TRY',
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            });
+          }
+        }
+      }
+    }
+  };
+
+  return (
+      <Card className="shadow-sm">
+        <Card.Body>
+          <Card.Title className="text-center mb-4">Finansal Genel Bakış</Card.Title>
+          {loading ? (
+              <div className="text-center p-5">Veriler yükleniyor...</div>
+          ) : (
+              <div style={{ height: '400px' }}>
+                <Line data={chartData} options={chartOptions} />
+              </div>
+          )}
+        </Card.Body>
+      </Card>
+  );
 }
+
+export default DashedLineChart;

@@ -1,68 +1,57 @@
-
-import { Card } from 'react-bootstrap';
-import React, { PureComponent } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Card } from 'react-bootstrap';
+import { fetchData } from '../../utils/api'; // API fonksiyonun burada olsun
 
-const data = [
-  {
-    name: 'Utility',
-    uv: 4000,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Rent',
-    uv: 3000,
-    pv: 1398,
-    amt: 2210,
-  },
-  {
-    name: 'Groceries',
-    uv: 2000,
-    pv: 9800,
-    amt: 2290,
-  },
-  {
-    name: 'Entertainment',
-    uv: 2780,
-    pv: 3908,
-    amt: 2000,
-  },
-  {
-    name: 'Page E',
-    uv: 1890,
-    pv: 4800,
-    amt: 2181,
-  },
- 
-];
+const ExpenseCard = () => {
+  const [chartData, setChartData] = useState([]);
 
-export default class Example extends PureComponent {
-  static demoUrl = 'https://codesandbox.io/p/sandbox/bar-chart-has-no-padding-2hlnt8';
+  useEffect(() => {
+    const fetchExpenseData = async () => {
+      try {
+        const data = await fetchData("http://localhost:8095/api/v1/expense/all");
 
-  render() {
-    return (
-           
-      <ResponsiveContainer width="90%" height={250}>
+        // Giderleri kategorilere göre grupla
+        const grouped = data.reduce((acc, curr) => {
+          const category = curr.category || "Other";
+          acc[category] = (acc[category] || 0) + parseFloat(curr.amount);
+          return acc;
+        }, {});
+
+        // Recharts formatına çevir
+        const formatted = Object.entries(grouped).map(([name, value]) => ({
+          name,
+          pv: value,
+        }));
+
+        setChartData(formatted);
+      } catch (error) {
+        console.error("Expense data fetch error:", error);
+      }
+    };
+
+    fetchExpenseData();
+  }, []);
+
+  return (
+      <Card style={{ padding: '20px', borderRadius: '12px' }}>
         <h2 className="panel-title">Expenses Sources</h2>
-     <BarChart
-      data={data}
-     margin={{
-      top: 5,
-      right: 20,
-      left: 10,
-      bottom: 20,
-    }}
-    barSize={15}
-    >
-    <XAxis dataKey="name" scale="point" padding={{ left: 5, right: 5 }} />
-    <YAxis />
-    <Tooltip />
-    <Legend />
-    <CartesianGrid strokeDasharray="3 3" />
-    <Bar dataKey="pv" fill="#000066" background={{ fill: '#eee' }} />
-     </BarChart>
-    </ResponsiveContainer>
-    );
-  }
-}
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart
+              data={chartData}
+              margin={{ top: 5, right: 20, left: 10, bottom: 20 }}
+              barSize={20}
+          >
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <CartesianGrid strokeDasharray="3 3" />
+            <Bar dataKey="pv" fill="#000066" />
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+  );
+};
+
+export default ExpenseCard;
